@@ -92,9 +92,10 @@ abstract class WZI_API_Handler {
      * @param    string    $method      Método HTTP (GET, POST, PUT, DELETE).
      * @param    array     $data        Datos a enviar.
      * @param    array     $headers     Headers adicionales.
+     * @param    bool      $body_is_pre_formatted Si es true, $data se usa directamente como el cuerpo (debe ser string). Si es false, $data se codifica como JSON.
      * @return   array|WP_Error         Respuesta de la API o error.
      */
-    protected function make_request($endpoint, $method = 'GET', $data = array(), $headers = array()) {
+    protected function make_request($endpoint, $method = 'GET', $data = array(), $headers = array(), $body_is_pre_formatted = false) {
         // Obtener token de acceso
         $access_token = $this->auth->get_access_token($this->service);
         
@@ -134,7 +135,13 @@ abstract class WZI_API_Handler {
         
         // Añadir datos según el método
         if (in_array($method, array('POST', 'PUT', 'PATCH'))) {
-            $args['body'] = json_encode($data);
+            if ($body_is_pre_formatted) {
+                $args['body'] = $data; // $data ya es un string formateado (ej. query string)
+            } elseif (!empty($data)) {
+                $args['body'] = json_encode($data); // Comportamiento por defecto: codificar como JSON
+            } else {
+                $args['body'] = null; // Cuerpo explícitamente nulo si no hay datos y no es pre-formateado
+            }
         } elseif ($method === 'GET' && !empty($data)) {
             $url = add_query_arg($data, $url);
         }

@@ -207,8 +207,51 @@ class WZI_Zoho_Books extends WZI_API_Handler {
      * @return array|WP_Error API response or WP_Error on failure.
      */
     public function update_invoice( $invoice_id, $invoice_data ) {
-        // Example: $response = $this->put("invoices/{$invoice_id}", $this->get_params_with_org_id(['JSONString' => json_encode($invoice_data)]));
-        return new WP_Error( 'not_implemented', __( 'Update invoice functionality is not yet implemented.', 'woocommerce-zoho-integration' ) );
+        if (empty($invoice_id)) {
+            return new WP_Error('missing_invoice_id', __('Invoice ID is required for updating.', 'woocommerce-zoho-integration'));
+        }
+        if (empty($invoice_data) || !is_array($invoice_data)) {
+            return new WP_Error('missing_invoice_data', __('Invoice data is required and must be an array for updating.', 'woocommerce-zoho-integration'));
+        }
+
+        if (empty($this->organization_id)) {
+            $this->fetch_organization_id();
+            if (empty($this->organization_id)) {
+                return new WP_Error('missing_organization_id', __('Zoho Books Organization ID is not configured.', 'woocommerce-zoho-integration'));
+            }
+        }
+
+        $endpoint = sprintf('invoices/%s', $invoice_id);
+        $params = $this->get_params_with_org_id(); // Asegura organization_id en query params si es necesario por la API
+
+        if (!empty($params)) {
+            $endpoint = add_query_arg($params, $endpoint);
+        }
+
+        // Zoho Books API para PUT /invoices/{invoice_id} usualmente espera el cuerpo JSON completo del objeto factura.
+        // WZI_API_Handler::put() se encarga de json_encode($invoice_data).
+        $response = $this->put($endpoint, $invoice_data);
+
+        if (is_wp_error($response)) {
+            return $response;
+        }
+
+        if (isset($response['data']['invoice'])) {
+            $this->logger->info('Invoice updated successfully in Zoho Books.', array(
+                'invoice_id' => $response['data']['invoice']['invoice_id'],
+                'invoice_number' => $response['data']['invoice']['invoice_number']
+            ));
+            return $response['data']['invoice'];
+        } elseif (isset($response['data']['message']) && strpos(strtolower($response['data']['message']), 'success') !== false) {
+             $this->logger->info('Invoice update reported success by Zoho Books, but full invoice data not in response.', $response['data']);
+            return $response['data'];
+        }
+
+        $this->logger->error('Failed to update invoice in Zoho Books or unexpected response structure.', array(
+            'invoice_id' => $invoice_id,
+            'response' => $response['data'] ?? $response
+        ));
+        return new WP_Error('invoice_update_failed', __('Failed to update invoice in Zoho Books or unexpected response structure.', 'woocommerce-zoho-integration'), $response['data'] ?? $response);
     }
 
     /**
