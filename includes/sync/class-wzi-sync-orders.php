@@ -107,7 +107,7 @@ class WZI_Sync_Orders {
     private function load_field_mapping() {
         global $wpdb;
         
-        $mapping_table = $wpdb->prefix . 'wzi_field_mappings';
+        $mapping_table = $wpdb->prefix . 'wzi_field_mapping'; // Unificado a singular
         
         $mappings = $wpdb->get_results($wpdb->prepare(
             "SELECT * FROM {$mapping_table} 

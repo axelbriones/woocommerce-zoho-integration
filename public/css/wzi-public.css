@@ -1,0 +1,20 @@
+/**
+ * All of the CSS for your public-facing functionality should be
+ * included in this file.
+ */
+
+/* Example: Styles for a Zoho custom field displayed on a product page */
+.wzi-zoho-product-info {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #f8f8f8;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+}
+
+.wzi-zoho-product-info strong {
+    color: #333;
+}
+
+/* Add other public-facing styles here */
+/* For example, if you add any frontend elements like modals, banners, etc. */

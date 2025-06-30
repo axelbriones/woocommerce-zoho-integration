@@ -97,9 +97,13 @@ class WZI_Sync_Manager {
     }
 
     /**
-     * Inicializar sincronizadores.
+     * Inicializar instancias de las clases de sincronización específicas.
+     *
+     * Carga los sincronizadores para los módulos que están habilitados
+     * en la configuración del plugin.
      *
      * @since    1.0.0
+     * @access   private
      */
     private function init_syncers() {
         // Solo inicializar si están habilitados
@@ -125,11 +129,12 @@ class WZI_Sync_Manager {
     }
 
     /**
-     * Verificar si un tipo de sincronización está habilitado.
+     * Verificar si un tipo de sincronización específico está habilitado en la configuración.
      *
      * @since    1.0.0
-     * @param    string    $type    Tipo de sincronización.
-     * @return   bool               Si está habilitado.
+     * @access   private
+     * @param    string    $type    El tipo de sincronización (ej. 'customers', 'products').
+     * @return   bool               True si está habilitado, false en caso contrario.
      */
     private function is_sync_enabled($type) {
         $key = 'sync_' . $type;
@@ -301,12 +306,16 @@ class WZI_Sync_Manager {
     }
 
     /**
-     * Sincronizar un tipo específico.
+     * Sincronizar un tipo de entidad específico (ej. clientes, productos).
+     *
+     * Delega la sincronización al sincronizador correspondiente para el tipo dado,
+     * considerando la dirección de la sincronización.
      *
      * @since    1.0.0
-     * @param    string    $type        Tipo de sincronización.
-     * @param    string    $direction   Dirección.
-     * @return   array                  Resultado.
+     * @access   private
+     * @param    string    $type        El tipo de entidad a sincronizar (ej. 'customers', 'products').
+     * @param    string    $direction   La dirección de la sincronización ('woo_to_zoho', 'zoho_to_woo', 'both').
+     * @return   array                  Un array con los resultados: ['synced' => int, 'errors' => array].
      */
     private function sync_type($type, $direction) {
         if (!isset($this->syncers[$type])) {
@@ -514,11 +523,12 @@ class WZI_Sync_Manager {
     }
 
     /**
-     * Procesar elemento de la cola.
+     * Procesar un único elemento de la cola de sincronización.
      *
      * @since    1.0.0
-     * @param    object    $item    Elemento de la cola.
-     * @return   bool               Resultado del procesamiento.
+     * @access   private
+     * @param    object    $item    El objeto del elemento de la cola desde la base de datos.
+     * @return   bool               True si el procesamiento fue exitoso, false en caso contrario.
      */
     private function process_queue_item($item) {
         try {
@@ -558,11 +568,14 @@ class WZI_Sync_Manager {
     }
 
     /**
-     * Obtener tipo de sincronizador para un tipo de elemento.
+     * Obtener el tipo de sincronizador (key en $this->syncers) para un tipo de objeto dado.
+     *
+     * Por ejemplo, tanto 'customer' como 'user' pueden mapear al sincronizador 'customers'.
      *
      * @since    1.0.0
-     * @param    string    $item_type    Tipo de elemento.
-     * @return   string                  Tipo de sincronizador.
+     * @access   private
+     * @param    string    $item_type    El tipo de objeto (ej. 'customer', 'shop_order').
+     * @return   string                  El tipo de sincronizador correspondiente (ej. 'customers', 'orders').
      */
     private function get_syncer_type_for_item($item_type) {
         $mapping = array(
@@ -631,12 +644,13 @@ class WZI_Sync_Manager {
     }
 
     /**
-     * Mapear webhook a tipo de sincronización.
+     * Mapear una entidad de webhook de Zoho a un tipo de sincronizador del plugin.
      *
      * @since    1.0.0
-     * @param    string    $service        Servicio.
-     * @param    string    $entity_type    Tipo de entidad.
-     * @return   string                    Tipo de sincronización.
+     * @access   private
+     * @param    string    $service        El servicio de Zoho que envió el webhook (ej. 'crm', 'inventory').
+     * @param    string    $entity_type    El tipo de entidad de Zoho (ej. 'Contacts', 'Items').
+     * @return   string                    El tipo de sincronizador del plugin o una cadena vacía si no hay mapeo.
      */
     private function map_webhook_to_sync_type($service, $entity_type) {
         $mapping = array(
@@ -711,12 +725,16 @@ class WZI_Sync_Manager {
     }
 
     /**
-     * Actualizar progreso de sincronización.
+     * Actualizar el progreso de la sincronización actual.
+     *
+     * Guarda el estado actual en un transient para que pueda ser consultado.
      *
      * @since    1.0.0
-     * @param    string    $type        Tipo actual.
-     * @param    int       $current     Progreso actual.
-     * @param    int       $total       Total.
+     * @access   private
+     * @param    string    $type        El tipo de entidad que se está sincronizando actualmente.
+     * @param    int       $current     El número de ítems procesados.
+     * @param    int       $total       El número total de ítems a procesar.
+     * @return   void
      */
     private function update_sync_progress($type, $current, $total) {
         $this->sync_status['current_type'] = $type;
@@ -727,10 +745,14 @@ class WZI_Sync_Manager {
     }
 
     /**
-     * Establecer estado de sincronización.
+     * Establecer/actualizar el estado general de la sincronización.
+     *
+     * Guarda el estado en un transient.
      *
      * @since    1.0.0
-     * @param    array    $status    Nuevo estado.
+     * @access   private
+     * @param    array    $status    Un array con los datos del estado a actualizar.
+     * @return   void
      */
     private function set_sync_status($status) {
         $this->sync_status = array_merge($this->sync_status, $status);

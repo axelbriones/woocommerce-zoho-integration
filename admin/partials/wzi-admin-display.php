@@ -139,17 +139,41 @@ $sync_stats = $sync_manager->get_sync_stats('week');
                     <h4><?php echo ucfirst($type); ?></h4>
                     <div class="stat-details">
                         <div class="direction">
-                            <span class="label">WooCommerce → Zoho:</span>
+                            <span class="label"><?php esc_html_e('WooCommerce → Zoho:', 'woocommerce-zoho-integration'); ?></span>
                             <span class="success"><?php echo $data['woo_to_zoho']['success']; ?></span>
                             <?php if ($data['woo_to_zoho']['error'] > 0): ?>
-                                <span class="error">(<?php echo $data['woo_to_zoho']['error']; ?> errores)</span>
+                                <span class="error">
+                                    <?php
+                                    printf(
+                                        _n(
+                                            '(%s error)',
+                                            '(%s errores)',
+                                            $data['woo_to_zoho']['error'],
+                                            'woocommerce-zoho-integration'
+                                        ),
+                                        number_format_i18n($data['woo_to_zoho']['error'])
+                                    );
+                                    ?>
+                                </span>
                             <?php endif; ?>
                         </div>
                         <div class="direction">
-                            <span class="label">Zoho → WooCommerce:</span>
+                            <span class="label"><?php esc_html_e('Zoho → WooCommerce:', 'woocommerce-zoho-integration'); ?></span>
                             <span class="success"><?php echo $data['zoho_to_woo']['success']; ?></span>
                             <?php if ($data['zoho_to_woo']['error'] > 0): ?>
-                                <span class="error">(<?php echo $data['zoho_to_woo']['error']; ?> errores)</span>
+                                <span class="error">
+                                    <?php
+                                    printf(
+                                        _n(
+                                            '(%s error)',
+                                            '(%s errores)',
+                                            $data['zoho_to_woo']['error'],
+                                            'woocommerce-zoho-integration'
+                                        ),
+                                        number_format_i18n($data['zoho_to_woo']['error'])
+                                    );
+                                    ?>
+                                </span>
                             <?php endif; ?>
                         </div>
                     </div>

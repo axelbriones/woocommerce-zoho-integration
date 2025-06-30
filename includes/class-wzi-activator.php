@@ -50,86 +50,21 @@ class WZI_Activator {
      * Crear tablas de base de datos
      */
     private static function create_database_tables() {
-        global $wpdb;
-        
-        $charset_collate = $wpdb->get_charset_collate();
-        
-        // Tabla de logs de sincronización
-        $sync_logs_table = $wpdb->prefix . 'wzi_sync_logs';
-        $sql_sync_logs = "CREATE TABLE IF NOT EXISTS $sync_logs_table (
-            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-            sync_type varchar(50) NOT NULL,
-            sync_direction varchar(20) NOT NULL,
-            status varchar(20) NOT NULL,
-            message text,
-            details longtext,
-            created_at datetime DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            KEY sync_type (sync_type),
-            KEY status (status),
-            KEY created_at (created_at)
-        ) $charset_collate;";
-        
-        // Tabla de cola de sincronización
-        $sync_queue_table = $wpdb->prefix . 'wzi_sync_queue';
-        $sql_sync_queue = "CREATE TABLE IF NOT EXISTS $sync_queue_table (
-            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-            item_type varchar(50) NOT NULL,
-            item_id bigint(20) unsigned NOT NULL,
-            action varchar(20) NOT NULL,
-            priority int(11) DEFAULT 10,
-            status varchar(20) DEFAULT 'pending',
-            attempts int(11) DEFAULT 0,
-            last_attempt datetime,
-            data longtext,
-            created_at datetime DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            KEY item_type_id (item_type, item_id),
-            KEY status_priority (status, priority),
-            KEY created_at (created_at)
-        ) $charset_collate;";
-        
-        // Tabla de mapeo de campos
-        $mapping_table = $wpdb->prefix . 'wzi_field_mappings';
-        $sql_mapping = "CREATE TABLE IF NOT EXISTS $mapping_table (
-            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-            entity_type varchar(50) NOT NULL,
-            woo_field varchar(100) NOT NULL,
-            zoho_field varchar(100) NOT NULL,
-            sync_direction varchar(20) DEFAULT 'both',
-            transform_function varchar(100),
-            is_active tinyint(1) DEFAULT 1,
-            created_at datetime DEFAULT CURRENT_TIMESTAMP,
-            updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            UNIQUE KEY entity_fields (entity_type, woo_field, zoho_field),
-            KEY entity_type (entity_type)
-        ) $charset_collate;";
-        
-        // Tabla de tokens de autenticación
-        $auth_tokens_table = $wpdb->prefix . 'wzi_auth_tokens';
-        $sql_auth_tokens = "CREATE TABLE IF NOT EXISTS $auth_tokens_table (
-            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-            service varchar(50) NOT NULL,
-            token_type varchar(20) NOT NULL,
-            access_token text NOT NULL,
-            refresh_token text,
-            expires_at datetime,
-            scope text,
-            created_at datetime DEFAULT CURRENT_TIMESTAMP,
-            updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            UNIQUE KEY service_type (service, token_type)
-        ) $charset_collate;";
-        
-        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-        dbDelta($sql_sync_logs);
-        dbDelta($sql_sync_queue);
-        dbDelta($sql_mapping);
-        dbDelta($sql_auth_tokens);
-        
-        // Guardar versión de la base de datos
-        update_option('wzi_db_version', WZI_VERSION);
+        // Incluir los archivos de migración
+        require_once WZI_PLUGIN_DIR . 'database/migrations/create_sync_logs_table.php';
+        require_once WZI_PLUGIN_DIR . 'database/migrations/create_sync_queue_table.php';
+        require_once WZI_PLUGIN_DIR . 'database/migrations/create_mapping_table.php';
+        require_once WZI_PLUGIN_DIR . 'database/migrations/create_auth_tokens_table.php';
+
+        // Ejecutar las funciones de creación de tablas
+        wzi_create_sync_logs_table();
+        wzi_create_sync_queue_table();
+        wzi_create_mapping_table();
+        wzi_create_auth_tokens_table();
+
+        // Guardar versión de la base de datos (opcional, si quieres versionar el schema general)
+        // O cada archivo de migración maneja su propia versión de tabla como ya lo hacen.
+        update_option('wzi_db_schema_version', WZI_VERSION); // Usar una clave diferente para la versión general del schema
     }
     
     /**
@@ -186,7 +121,7 @@ class WZI_Activator {
      */
     private static function set_default_field_mappings() {
         global $wpdb;
-        $mapping_table = $wpdb->prefix . 'wzi_field_mappings';
+        $mapping_table = $wpdb->prefix . 'wzi_field_mapping'; // Unificado a singular
         
         $default_mappings = array(
             // Mapeo de clientes

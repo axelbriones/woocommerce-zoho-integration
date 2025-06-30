@@ -1,0 +1,851 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: WooCommerce Zoho Integration 1.2.4\n"
+"Report-Msgid-Bugs-To: https://bbrion.es/woocommerce-zoho-integration\n"
+"POT-Creation-Date: 2024-07-15 10:00:00+0000\n"
+"PO-Revision-Date: 2024-07-15 10:00:00+0000\n"
+"Last-Translator: Axel Briones <axel@bbrion.es>\n"
+"Language-Team: Axel Briones <axel@bbrion.es>\n"
+"Language: es_ES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Jules Agent\n"
+"X-Domain: woocommerce-zoho-integration\n"
+
+#: admin/partials/wzi-admin-display.php:22
+msgid "Estado de Conexión"
+msgstr "Estado de Conexión"
+
+#: admin/partials/wzi-admin-display.php:25
+msgid "Conectado a Zoho"
+msgstr "Conectado a Zoho"
+
+#: admin/partials/wzi-admin-display.php:27
+msgid "Servicios activos:"
+msgstr "Servicios activos:"
+
+#: admin/partials/wzi-admin-display.php:31
+msgid "No conectado"
+msgstr "No conectado"
+
+#: admin/partials/wzi-admin-display.php:34
+msgid "Configurar Conexión"
+msgstr "Configurar Conexión"
+
+#: admin/partials/wzi-admin-display.php:41
+msgid "Estado de Sincronización"
+msgstr "Estado de Sincronización"
+
+#: admin/partials/wzi-admin-display.php:45
+#, php-format
+msgid "Sincronizando %s..."
+msgstr "Sincronizando %s..."
+
+#: admin/partials/wzi-admin-display.php:51
+msgid "Sin sincronizaciones activas"
+msgstr "Sin sincronizaciones activas"
+
+#: admin/partials/wzi-admin-display.php:56
+#, php-format
+msgid "Última: %s - %s atrás"
+msgstr "Última: %s - %s atrás"
+
+#: admin/partials/wzi-admin-display.php:64
+msgid "Actividad de Hoy"
+msgstr "Actividad de Hoy"
+
+#: admin/partials/wzi-admin-display.php:68
+msgid "Total"
+msgstr "Total"
+
+#: admin/partials/wzi-admin-display.php:72
+msgid "Exitosas"
+msgstr "Exitosas"
+
+#: admin/partials/wzi-admin-display.php:76
+msgid "Errores"
+msgstr "Errores"
+
+#: admin/partials/wzi-admin-display.php:81
+msgid "Ver todos los logs →"
+msgstr "Ver todos los logs →"
+
+#: admin/partials/wzi-admin-display.php:87
+msgid "Cola de Sincronización"
+msgstr "Cola de Sincronización"
+
+#: admin/partials/wzi-admin-display.php:92
+#, php-format
+msgid "There are currently %d items pending in the synchronization queue."
+msgstr "Actualmente hay %d elementos pendientes en la cola de sincronización."
+
+#: admin/partials/wzi-admin-display.php:99
+#, php-format
+msgid "%d elementos fallidos"
+msgstr "%d elementos fallidos"
+
+#: admin/partials/wzi-admin-display.php:108
+msgid "Estadísticas de la Última Semana"
+msgstr "Estadísticas de la Última Semana"
+
+#: admin/partials/wzi-admin-display.php:116
+msgid "WooCommerce → Zoho:"
+msgstr "WooCommerce → Zoho:"
+
+#: admin/partials/wzi-admin-display.php:120 admin/partials/wzi-admin-display.php:136
+#, php-format
+msgid "(%s error)"
+msgid_plural "(%s errores)"
+msgstr[0] "(%s error)"
+msgstr[1] "(%s errores)"
+
+#: admin/partials/wzi-admin-display.php:132
+msgid "Zoho → WooCommerce:"
+msgstr "Zoho → WooCommerce:"
+
+#: admin/partials/wzi-admin-display.php:151
+#, php-format
+msgid "Total: %d sincronizaciones exitosas, %d errores"
+msgstr "Total: %d sincronizaciones exitosas, %d errores"
+
+#: admin/partials/wzi-admin-display.php:159
+msgid "Acciones Rápidas"
+msgstr "Acciones Rápidas"
+
+#: admin/partials/wzi-admin-display.php:164
+msgid "Sincronizar Todo"
+msgstr "Sincronizar Todo"
+
+#: admin/partials/wzi-admin-display.php:168
+msgid "Sincronizar Clientes"
+msgstr "Sincronizar Clientes"
+
+#: admin/partials/wzi-admin-display.php:172
+msgid "Sincronizar Pedidos"
+msgstr "Sincronizar Pedidos"
+
+#: admin/partials/wzi-admin-display.php:176
+msgid "Sincronizar Productos"
+msgstr "Sincronizar Productos"
+
+#: admin/partials/wzi-admin-display.php:179
+msgid "Conecta con Zoho para habilitar las acciones de sincronización."
+msgstr "Conecta con Zoho para habilitar las acciones de sincronización."
+
+#: admin/partials/wzi-admin-display.php:187
+msgid "Errores Recientes"
+msgstr "Errores Recientes"
+
+#: admin/partials/wzi-admin-display.php:192
+msgid "Hora"
+msgstr "Hora"
+
+#: admin/partials/wzi-admin-display.php:193
+msgid "Tipo"
+msgstr "Tipo"
+
+#: admin/partials/wzi-admin-display.php:194
+msgid "Mensaje"
+msgstr "Mensaje"
+
+#: admin/partials/wzi-admin-display.php:199
+msgid "atrás"
+msgstr "atrás"
+
+#: admin/partials/wzi-admin-display.php:207
+msgid "Ver todos los errores →"
+msgstr "Ver todos los errores →"
+
+#: admin/partials/wzi-admin-display.php:213
+msgid "Información del Sistema"
+msgstr "Información del Sistema"
+
+#: admin/partials/wzi-admin-display.php:217
+msgid "Versión del Plugin:"
+msgstr "Versión del Plugin:"
+
+#: admin/partials/wzi-admin-display.php:221
+msgid "Versión de WooCommerce:"
+msgstr "Versión de WooCommerce:"
+
+#: admin/partials/wzi-admin-display.php:225
+msgid "Versión de PHP:"
+msgstr "Versión de PHP:"
+
+#: admin/partials/wzi-admin-display.php:229
+msgid "Tamaño de Logs:"
+msgstr "Tamaño de Logs:"
+
+#: admin/partials/wzi-settings-display.php:20
+msgid "Configuración guardada"
+msgstr "Configuración guardada"
+
+#: admin/partials/wzi-settings-display.php:29
+msgid "General"
+msgstr "General"
+
+#: admin/partials/wzi-settings-display.php:33
+msgid "API de Zoho"
+msgstr "API de Zoho"
+
+#: admin/partials/wzi-settings-display.php:37
+msgid "Sincronización"
+msgstr "Sincronización"
+
+#: admin/partials/wzi-settings-display.php:41
+msgid "Mapeo de Campos"
+msgstr "Mapeo de Campos"
+
+#: admin/partials/wzi-settings-display.php:45
+msgid "Webhooks"
+msgstr "Webhooks"
+
+#: admin/partials/wzi-settings-display.php:49
+msgid "Avanzado"
+msgstr "Avanzado"
+
+#: admin/partials/api-tab.php:30
+msgid "Autorización completada exitosamente."
+msgstr "Autorización completada exitosamente."
+
+#: admin/partials/api-tab.php:34
+msgid "Error durante la autorización. Por favor, intenta nuevamente."
+msgstr "Error durante la autorización. Por favor, intenta nuevamente."
+
+#: admin/partials/api-tab.php:38
+msgid "Tokens revocados exitosamente."
+msgstr "Tokens revocados exitosamente."
+
+#: admin/partials/api-tab.php:41
+msgid "Configuración de API de Zoho"
+msgstr "Configuración de API de Zoho"
+
+#: admin/partials/api-tab.php:45
+msgid "Estado de Conexión"
+msgstr "Estado de Conexión"
+
+#: admin/partials/api-tab.php:52
+msgid "Servicio"
+msgstr "Servicio"
+
+#: admin/partials/api-tab.php:53
+msgid "Estado"
+msgstr "Estado"
+
+#: admin/partials/api-tab.php:54
+msgid "Expiración"
+msgstr "Expiración"
+
+#: admin/partials/api-tab.php:55
+msgid "Acciones"
+msgstr "Acciones"
+
+#: admin/partials/api-tab.php:63
+msgid "Conectado"
+msgstr "Conectado"
+
+#: admin/partials/api-tab.php:69
+#, php-format
+msgid "Expira en %s"
+msgstr "Expira en %s"
+
+#: admin/partials/api-tab.php:74
+msgid "Probar Conexión"
+msgstr "Probar Conexión"
+
+#: admin/partials/api-tab.php:78
+#, php-format
+msgid "¿Estás seguro de que deseas revocar esta conexión?"
+msgstr "¿Estás seguro de que deseas revocar esta conexión?"
+
+#: admin/partials/api-tab.php:79
+msgid "Revocar"
+msgstr "Revocar"
+
+#: admin/partials/api-tab.php:87
+msgid "No hay servicios conectados"
+msgstr "No hay servicios conectados"
+
+#: admin/partials/api-tab.php:101
+msgid "Client ID"
+msgstr "Client ID"
+
+#: admin/partials/api-tab.php:109
+msgid "Ingrese el Client ID de su aplicación Zoho."
+msgstr "Ingrese el Client ID de su aplicación Zoho."
+
+#: admin/partials/api-tab.php:116
+msgid "Client Secret"
+msgstr "Client Secret"
+
+#: admin/partials/api-tab.php:124
+msgid "Ingrese el Client Secret de su aplicación Zoho."
+msgstr "Ingrese el Client Secret de su aplicación Zoho."
+
+#: admin/partials/api-tab.php:131
+msgid "Redirect URI"
+msgstr "Redirect URI"
+
+#: admin/partials/api-tab.php:139
+msgid "Copie esta URL y péguela en la configuración de Redirect URI de su aplicación Zoho."
+msgstr "Copie esta URL y péguela en la configuración de Redirect URI de su aplicación Zoho."
+
+#: admin/partials/api-tab.php:140 admin/partials/api-tab.php:301
+msgid "Copiar"
+msgstr "Copiar"
+
+#: admin/partials/api-tab.php:147
+msgid "Centro de Datos"
+msgstr "Centro de Datos"
+
+#: admin/partials/api-tab.php:151
+msgid ".com (United States)"
+msgstr ".com (Estados Unidos)"
+
+#: admin/partials/api-tab.php:154
+msgid ".eu (Europe)"
+msgstr ".eu (Europa)"
+
+#: admin/partials/api-tab.php:157
+msgid ".in (India)"
+msgstr ".in (India)"
+
+#: admin/partials/api-tab.php:160
+msgid ".com.cn (China)"
+msgstr ".com.cn (China)"
+
+#: admin/partials/api-tab.php:163
+msgid ".com.au (Australia)"
+msgstr ".com.au (Australia)"
+
+#: admin/partials/api-tab.php:167
+msgid "Seleccione el centro de datos donde está alojada su cuenta de Zoho."
+msgstr "Seleccione el centro de datos donde está alojada su cuenta de Zoho."
+
+#: admin/partials/api-tab.php:173
+msgid "Modo Sandbox"
+msgstr "Modo Sandbox"
+
+#: admin/partials/api-tab.php:180
+msgid "Usar entorno sandbox de Zoho"
+msgstr "Usar entorno sandbox de Zoho"
+
+#: admin/partials/api-tab.php:183
+msgid "Active esta opción para usar el entorno de pruebas de Zoho."
+msgstr "Active esta opción para usar el entorno de pruebas de Zoho."
+
+#: admin/partials/api-tab.php:188
+msgid "Guardar Configuración"
+msgstr "Guardar Configuración"
+
+#: admin/partials/api-tab.php:193
+msgid "Autorización OAuth"
+msgstr "Autorización OAuth"
+
+#: admin/partials/api-tab.php:197
+msgid "Servicios a Autorizar"
+msgstr "Servicios a Autorizar"
+
+#: admin/partials/api-tab.php:198
+msgid "Seleccione los servicios de Zoho que desea integrar:"
+msgstr "Seleccione los servicios de Zoho que desea integrar:"
+
+#: admin/partials/api-tab.php:203
+msgid "Zoho CRM"
+msgstr "Zoho CRM"
+
+#: admin/partials/api-tab.php:208
+msgid "Zoho Inventory"
+msgstr "Zoho Inventory"
+
+#: admin/partials/api-tab.php:213
+msgid "Zoho Books"
+msgstr "Zoho Books"
+
+#: admin/partials/api-tab.php:218
+msgid "Zoho Campaigns"
+msgstr "Zoho Campaigns"
+
+#: admin/partials/api-tab.php:225
+msgid "Autorizar con Zoho"
+msgstr "Autorizar con Zoho"
+
+#: admin/partials/api-tab.php:230
+msgid "Configuración Requerida"
+msgstr "Configuración Requerida"
+
+#: admin/partials/api-tab.php:231
+msgid "Por favor, ingrese su Client ID y Client Secret antes de autorizar."
+msgstr "Por favor, ingrese su Client ID y Client Secret antes de autorizar."
+
+#: admin/partials/api-tab.php:237
+msgid "Instrucciones de Configuración"
+msgstr "Instrucciones de Configuración"
+
+#: admin/partials/api-tab.php:241
+msgid "Vaya a la"
+msgstr "Vaya a la"
+
+#: admin/partials/api-tab.php:243
+msgid "Consola de API de Zoho"
+msgstr "Consola de API de Zoho"
+
+#: admin/partials/api-tab.php:246
+msgid "Cree una nueva aplicación del tipo \"Server-based Applications\""
+msgstr "Cree una nueva aplicación del tipo \"Server-based Applications\""
+
+#: admin/partials/api-tab.php:247
+msgid "Configure los siguientes detalles:"
+msgstr "Configure los siguientes detalles:"
+
+#: admin/partials/api-tab.php:249
+msgid "Homepage URL:"
+msgstr "Homepage URL:"
+
+#: admin/partials/api-tab.php:250
+msgid "Authorized Redirect URIs:"
+msgstr "Authorized Redirect URIs:"
+
+#: admin/partials/api-tab.php:255
+msgid "Copie el Client ID y Client Secret generados"
+msgstr "Copie el Client ID y Client Secret generados"
+
+#: admin/partials/api-tab.php:256
+msgid "Pegue las credenciales en los campos correspondientes arriba"
+msgstr "Pegue las credenciales en los campos correspondientes arriba"
+
+#: admin/partials/api-tab.php:257
+msgid "Guarde la configuración"
+msgstr "Guarde la configuración"
+
+#: admin/partials/api-tab.php:258
+msgid "Haga clic en \"Autorizar con Zoho\" y seleccione los servicios deseados"
+msgstr "Haga clic en \"Autorizar con Zoho\" y seleccione los servicios deseados"
+
+#: admin/partials/api-tab.php:300
+msgid "Copiado!"
+msgstr "¡Copiado!"
+
+#: admin/partials/api-tab.php:308
+msgid "Probando..."
+msgstr "Probando..."
+
+#: admin/partials/api-tab.php:321
+msgid "✓ Conexión OK"
+msgstr "✓ Conexión OK"
+
+#: admin/partials/api-tab.php:324 admin/partials/api-tab.php:328
+msgid "✗ Error"
+msgstr "✗ Error"
+
+#: includes/class-wzi-main.php:259
+msgid "Cada 5 minutos"
+msgstr "Cada 5 minutos"
+
+#: includes/class-wzi-main.php:264
+msgid "Cada 15 minutos"
+msgstr "Cada 15 minutos"
+
+#: includes/class-wzi-activator.php:104
+msgid "Gestor Zoho"
+msgstr "Gestor Zoho"
+
+#: includes/class-wzi-admin.php:100
+msgid "Zoho Integration"
+msgstr "Integración Zoho"
+
+#: includes/class-wzi-admin.php:108 includes/class-wzi-admin.php:115
+msgid "Dashboard"
+msgstr "Dashboard"
+
+#: includes/class-wzi-admin.php:122 includes/class-wzi-admin.php:203
+msgid "Configuración"
+msgstr "Configuración"
+
+#: includes/class-wzi-admin.php:130 includes/class-wzi-admin.php:223
+msgid "Sincronización"
+msgstr "Sincronización"
+
+#: includes/class-wzi-admin.php:138 includes/class-wzi-admin.php:231
+msgid "Logs"
+msgstr "Logs"
+
+#: includes/class-wzi-admin.php:146 includes/class-wzi-admin.php:239
+msgid "Ayuda"
+msgstr "Ayuda"
+
+#: includes/class-wzi-admin.php:204
+msgid "Documentación"
+msgstr "Documentación"
+
+#: includes/class-wzi-admin.php:220
+msgid "Autorización con Zoho completada exitosamente."
+msgstr "Autorización con Zoho completada exitosamente."
+
+#: includes/class-wzi-admin.php:224
+msgid "Error al autorizar con Zoho. Por favor, intenta nuevamente."
+msgstr "Error al autorizar con Zoho. Por favor, intenta nuevamente."
+
+#: includes/class-wzi-admin.php:228
+msgid "Configuración guardada exitosamente."
+msgstr "Configuración guardada exitosamente."
+
+#: includes/class-wzi-admin.php:232
+msgid "Sincronización iniciada. Revisa los logs para ver el progreso."
+msgstr "Sincronización iniciada. Revisa los logs para ver el progreso."
+
+#: includes/class-wzi-admin.php:246
+msgid "WooCommerce Zoho Integration: No está conectado con Zoho."
+msgstr "WooCommerce Zoho Integration: No está conectado con Zoho."
+
+#: includes/class-wzi-admin.php:247
+msgid "Configurar ahora"
+msgstr "Configurar ahora"
+
+#: includes/class-wzi-admin.php:261 includes/class-wzi-admin.php:328
+msgid "No tienes permisos para realizar esta acción."
+msgstr "No tienes permisos para realizar esta acción."
+
+#: includes/class-wzi-admin.php:285
+#, php-format
+msgid "Conexión exitosa con Zoho %s"
+msgstr "Conexión exitosa con Zoho %s"
+
+#: includes/class-wzi-admin.php:287
+#, php-format
+msgid "Error al conectar con Zoho %s"
+msgstr "Error al conectar con Zoho %s"
+
+#: includes/class-wzi-admin.php:356
+msgid "Datos inválidos"
+msgstr "Datos inválidos"
+
+#: includes/class-wzi-admin.php:400
+msgid "Mapeo de campos guardado exitosamente"
+msgstr "Mapeo de campos guardado exitosamente"
+
+#: includes/class-wzi-admin.php:440
+msgid "Logs limpiados exitosamente"
+msgstr "Logs limpiados exitosamente"
+
+#: includes/class-wzi-admin.php:442
+msgid "Error al limpiar los logs"
+msgstr "Error al limpiar los logs"
+
+#: includes/class-wzi-settings.php:74
+msgid "Configuración General"
+msgstr "Configuración General"
+
+#: includes/class-wzi-settings.php:81
+msgid "Habilitar Sincronización"
+msgstr "Habilitar Sincronización"
+
+#: includes/class-wzi-settings.php:88
+msgid "Modo de Sincronización"
+msgstr "Modo de Sincronización"
+
+#: includes/class-wzi-settings.php:95
+msgid "Modo Debug"
+msgstr "Modo Debug"
+
+#: includes/class-wzi-settings.php:102
+msgid "Retención de Logs (días)"
+msgstr "Retención de Logs (días)"
+
+#: includes/class-wzi-settings.php:130
+msgid "Configuración de API de Zoho"
+msgstr "Configuración de API de Zoho"
+
+#: includes/class-wzi-settings.php:137
+msgid "Client ID"
+msgstr "Client ID"
+
+#: includes/class-wzi-settings.php:144
+msgid "Client Secret"
+msgstr "Client Secret"
+
+#: includes/class-wzi-settings.php:151
+msgid "Redirect URI"
+msgstr "Redirect URI"
+
+#: includes/class-wzi-settings.php:158
+msgid "Centro de Datos"
+msgstr "Centro de Datos"
+
+#: includes/class-wzi-settings.php:165
+msgid "Modo Sandbox"
+msgstr "Modo Sandbox"
+
+#: includes/class-wzi-settings.php:193
+msgid "Configuración de Sincronización"
+msgstr "Configuración de Sincronización"
+
+#: includes/class-wzi-settings.php:199
+msgid "Sincronizar Clientes"
+msgstr "Sincronizar Clientes"
+
+#: includes/class-wzi-settings.php:206
+msgid "Sincronizar Pedidos"
+msgstr "Sincronizar Pedidos"
+
+#: includes/class-wzi-settings.php:213
+msgid "Sincronizar Productos"
+msgstr "Sincronizar Productos"
+
+#: includes/class-wzi-settings.php:220
+msgid "Sincronizar Facturas"
+msgstr "Sincronizar Facturas"
+
+#: includes/class-wzi-settings.php:227
+msgid "Sincronizar Cupones"
+msgstr "Sincronizar Cupones"
+
+#: includes/class-wzi-settings.php:235
+msgid "Dirección de Sincronización"
+msgstr "Dirección de Sincronización"
+
+#: includes/class-wzi-settings.php:242
+msgid "Tamaño de Lote"
+msgstr "Tamaño de Lote"
+
+#: includes/class-wzi-settings.php:249
+msgid "Intervalo de Sincronización"
+msgstr "Intervalo de Sincronización"
+
+#: includes/class-wzi-settings.php:277
+msgid "Configuración de Webhooks"
+msgstr "Configuración de Webhooks"
+
+#: includes/class-wzi-settings.php:284
+msgid "Habilitar Webhooks"
+msgstr "Habilitar Webhooks"
+
+#: includes/class-wzi-settings.php:291
+msgid "Webhook Secret"
+msgstr "Webhook Secret"
+
+#: includes/class-wzi-settings.php:298
+msgid "URLs de Webhook"
+msgstr "URLs de Webhook"
+
+#: includes/class-wzi-settings.php:307
+msgid "Configure las opciones generales del plugin."
+msgstr "Configure las opciones generales del plugin."
+
+#: includes/class-wzi-settings.php:311
+msgid "Configure las credenciales de API de Zoho. Puede obtenerlas desde la consola de desarrolladores de Zoho."
+msgstr "Configure las credenciales de API de Zoho. Puede obtenerlas desde la consola de desarrolladores de Zoho."
+
+#: includes/class-wzi-settings.php:315
+msgid "Configure qué elementos desea sincronizar y cómo."
+msgstr "Configure qué elementos desea sincronizar y cómo."
+
+#: includes/class-wzi-settings.php:319
+msgid "Configure los webhooks para recibir actualizaciones en tiempo real desde Zoho."
+msgstr "Configure los webhooks para recibir actualizaciones en tiempo real desde Zoho."
+
+#: includes/class-wzi-settings.php:328
+msgid "Habilitar sincronización entre WooCommerce y Zoho"
+msgstr "Habilitar sincronización entre WooCommerce y Zoho"
+
+#: includes/class-wzi-settings.php:336
+msgid "Manual"
+msgstr "Manual"
+
+#: includes/class-wzi-settings.php:337
+msgid "Automático"
+msgstr "Automático"
+
+#: includes/class-wzi-settings.php:338
+msgid "Tiempo Real"
+msgstr "Tiempo Real"
+
+#: includes/class-wzi-settings.php:340
+msgid "Seleccione cómo desea que se realice la sincronización."
+msgstr "Seleccione cómo desea que se realice la sincronización."
+
+#: includes/class-wzi-settings.php:348
+msgid "Habilitar modo debug (registra información detallada en los logs)"
+msgstr "Habilitar modo debug (registra información detallada en los logs)"
+
+#: includes/class-wzi-settings.php:356
+msgid "Número de días para mantener los logs antes de eliminarlos automáticamente."
+msgstr "Número de días para mantener los logs antes de eliminarlos automáticamente."
+
+#: includes/class-wzi-settings.php:365
+msgid "Client ID de su aplicación Zoho"
+msgstr "Client ID de su aplicación Zoho"
+
+#: includes/class-wzi-settings.php:373
+msgid "Client Secret de su aplicación Zoho"
+msgstr "Client Secret de su aplicación Zoho"
+
+#: includes/class-wzi-settings.php:381
+msgid "Copie esta URL y péguela en la configuración de su aplicación Zoho"
+msgstr "Copie esta URL y péguela en la configuración de su aplicación Zoho"
+
+#: includes/class-wzi-settings.php:389
+msgid "Seleccione el centro de datos de su cuenta Zoho"
+msgstr "Seleccione el centro de datos de su cuenta Zoho"
+
+#: includes/class-wzi-settings.php:403
+msgid "Usar entorno sandbox de Zoho"
+msgstr "Usar entorno sandbox de Zoho"
+
+#: includes/class-wzi-settings.php:412
+msgid "Sincronizar clientes con Zoho CRM"
+msgstr "Sincronizar clientes con Zoho CRM"
+
+#: includes/class-wzi-settings.php:420
+msgid "Sincronizar pedidos con Zoho CRM"
+msgstr "Sincronizar pedidos con Zoho CRM"
+
+#: includes/class-wzi-settings.php:428
+msgid "Sincronizar productos con Zoho Inventory"
+msgstr "Sincronizar productos con Zoho Inventory"
+
+#: includes/class-wzi-settings.php:436
+msgid "Sincronizar facturas con Zoho Books"
+msgstr "Sincronizar facturas con Zoho Books"
+
+#: includes/class-wzi-settings.php:444
+msgid "Sincronizar cupones con Zoho Campaigns"
+msgstr "Sincronizar cupones con Zoho Campaigns"
+
+#: includes/class-wzi-settings.php:452
+msgid "WooCommerce → Zoho"
+msgstr "WooCommerce → Zoho"
+
+#: includes/class-wzi-settings.php:453
+msgid "Zoho → WooCommerce"
+msgstr "Zoho → WooCommerce"
+
+#: includes/class-wzi-settings.php:454
+msgid "Bidireccional"
+msgstr "Bidireccional"
+
+#: includes/class-wzi-settings.php:456
+msgid "Dirección de la sincronización de datos"
+msgstr "Dirección de la sincronización de datos"
+
+#: includes/class-wzi-settings.php:464
+msgid "Número de registros a procesar por lote"
+msgstr "Número de registros a procesar por lote"
+
+#: includes/class-wzi-settings.php:470
+msgid "Cada 5 minutos"
+msgstr "Cada 5 minutos"
+
+#: includes/class-wzi-settings.php:471
+msgid "Cada 15 minutos"
+msgstr "Cada 15 minutos"
+
+#: includes/class-wzi-settings.php:472
+msgid "Cada hora"
+msgstr "Cada hora"
+
+#: includes/class-wzi-settings.php:473
+msgid "Dos veces al día"
+msgstr "Dos veces al día"
+
+#: includes/class-wzi-settings.php:474
+msgid "Diariamente"
+msgstr "Diariamente"
+
+#: includes/class-wzi-settings.php:476
+msgid "Frecuencia de sincronización automática"
+msgstr "Frecuencia de sincronización automática"
+
+#: includes/class-wzi-settings.php:485
+msgid "Habilitar webhooks para recibir actualizaciones en tiempo real"
+msgstr "Habilitar webhooks para recibir actualizaciones en tiempo real"
+
+#: includes/class-wzi-settings.php:493
+msgid "Generar Nuevo"
+msgstr "Generar Nuevo"
+
+#: includes/class-wzi-settings.php:494
+msgid "Secret para validar webhooks entrantes"
+msgstr "Secret para validar webhooks entrantes"
+
+#: includes/class-wzi-settings.php:501
+msgid "URLs de Webhook para configurar en Zoho:"
+msgstr "URLs de Webhook para configurar en Zoho:"
+
+#: includes/class-wzi-settings.php:502
+msgid "CRM:"
+msgstr "CRM:"
+
+#: includes/class-wzi-settings.php:503
+msgid "Inventory:"
+msgstr "Inventory:"
+
+#: includes/class-wzi-settings.php:504
+msgid "Books:"
+msgstr "Books:"
+
+#: includes/class-wzi-settings.php:505
+msgid "Campaigns:"
+msgstr "Campaigns:"
+
+#: includes/api/class-wzi-zoho-books.php:30 includes/api/class-wzi-zoho-books.php:40 includes/api/class-wzi-zoho-books.php:50 includes/api/class-wzi-zoho-books.php:60 includes/api/class-wzi-zoho-books.php:70
+msgid "Create invoice functionality is not yet implemented."
+msgstr "La funcionalidad para crear facturas aún no está implementada."
+
+#: includes/api/class-wzi-zoho-books.php:30 includes/api/class-wzi-zoho-books.php:40 includes/api/class-wzi-zoho-books.php:50 includes/api/class-wzi-zoho-books.php:60 includes/api/class-wzi-zoho-books.php:70
+msgid "Get invoice functionality is not yet implemented."
+msgstr "La funcionalidad para obtener facturas aún no está implementada."
+
+#: includes/api/class-wzi-zoho-books.php:30 includes/api/class-wzi-zoho-books.php:40 includes/api/class-wzi-zoho-books.php:50 includes/api/class-wzi-zoho-books.php:60 includes/api/class-wzi-zoho-books.php:70
+msgid "Update invoice functionality is not yet implemented."
+msgstr "La funcionalidad para actualizar facturas aún no está implementada."
+
+#: includes/api/class-wzi-zoho-books.php:30 includes/api/class-wzi-zoho-books.php:40 includes/api/class-wzi-zoho-books.php:50 includes/api/class-wzi-zoho-books.php:60 includes/api/class-wzi-zoho-books.php:70
+msgid "Delete invoice functionality is not yet implemented."
+msgstr "La funcionalidad para eliminar facturas aún no está implementada."
+
+#: includes/api/class-wzi-zoho-books.php:30 includes/api/class-wzi-zoho-books.php:40 includes/api/class-wzi-zoho-books.php:50 includes/api/class-wzi-zoho-books.php:60 includes/api/class-wzi-zoho-books.php:70
+msgid "Create payment functionality is not yet implemented."
+msgstr "La funcionalidad para crear pagos aún no está implementada."
+
+#: includes/api/class-wzi-zoho-campaigns.php:33 includes/api/class-wzi-zoho-campaigns.php:43 includes/api/class-wzi-zoho-campaigns.php:53
+msgid "Add contact to list functionality is not yet implemented."
+msgstr "La funcionalidad para añadir contactos a listas aún no está implementada."
+
+#: includes/api/class-wzi-zoho-campaigns.php:33 includes/api/class-wzi-zoho-campaigns.php:43 includes/api/class-wzi-zoho-campaigns.php:53
+msgid "Get campaign details functionality is not yet implemented."
+msgstr "La funcionalidad para obtener detalles de campañas aún no está implementada."
+
+#: includes/api/class-wzi-zoho-campaigns.php:33 includes/api/class-wzi-zoho-campaigns.php:43 includes/api/class-wzi-zoho-campaigns.php:53
+msgid "Create coupon campaign functionality is not yet implemented."
+msgstr "La funcionalidad para crear campañas de cupones aún no está implementada."
+
+#: includes/sync/class-wzi-sync-invoices.php:38 includes/sync/class-wzi-sync-invoices.php:109
+msgid "Invalid order for invoice sync."
+msgstr "Pedido inválido para sincronización de factura."
+
+#: includes/sync/class-wzi-sync-invoices.php:58
+msgid "Failed to retrieve Zoho Invoice ID after creation."
+msgstr "No se pudo obtener el ID de la Factura de Zoho después de su creación."
+
+#: includes/sync/class-wzi-sync-invoices.php:78
+msgid "Zoho customer ID not found for this order. Sync customer first."
+msgstr "ID de cliente de Zoho no encontrado para este pedido. Sincronice el cliente primero."
+
+#: includes/sync/class-wzi-sync-invoices.php:98 includes/sync/class-wzi-sync-orders.php:544
+msgid "Shipping"
+msgstr "Envío"
+
+#: includes/sync/class-wzi-sync-coupons.php:38
+msgid "Invalid coupon for sync."
+msgstr "Cupón inválido para sincronización."
+
+#: includes/sync/class-wzi-sync-coupons.php:72
+msgid "WooCommerce Coupon: %s"
+msgstr "Cupón de WooCommerce: %s"
+
+#: includes/sync/class-wzi-sync-coupons.php:89
+msgid "Coupon code is missing."
+msgstr "Falta el código del cupón."
