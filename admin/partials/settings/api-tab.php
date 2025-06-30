@@ -116,8 +116,11 @@ if (isset($_GET['action']) && $_GET['action'] === 'revoke' && isset($_GET['servi
     <form method="post" action="options.php">
         <?php
         settings_fields('wzi_api_settings_group');
+        do_settings_sections('wzi_api_settings'); // <--- AÑADIDO
         ?>
         
+        <?php /* El siguiente código de tabla se elimina porque los campos ahora son renderizados por do_settings_sections */ ?>
+        <?php /*
         <table class="form-table">
             <tr>
                 <th scope="row">
@@ -187,23 +190,23 @@ if (isset($_GET['action']) && $_GET['action'] === 'revoke' && isset($_GET['servi
                     <select id="wzi_api_settings[data_center]" 
                             name="wzi_api_settings[data_center]">
                         <option value="com" <?php selected($api_settings['data_center'] ?? 'com', 'com'); ?>>
-                            .com (Estados Unidos)
+                            <?php esc_html_e('.com (United States)', 'woocommerce-zoho-integration'); ?>
                         </option>
                         <option value="eu" <?php selected($api_settings['data_center'] ?? '', 'eu'); ?>>
-                            .eu (Europa)
+                            <?php esc_html_e('.eu (Europe)', 'woocommerce-zoho-integration'); ?>
                         </option>
                         <option value="in" <?php selected($api_settings['data_center'] ?? '', 'in'); ?>>
-                            .in (India)
+                            <?php esc_html_e('.in (India)', 'woocommerce-zoho-integration'); ?>
                         </option>
                         <option value="com.cn" <?php selected($api_settings['data_center'] ?? '', 'com.cn'); ?>>
-                            .com.cn (China)
+                            <?php esc_html_e('.com.cn (China)', 'woocommerce-zoho-integration'); ?>
                         </option>
                         <option value="com.au" <?php selected($api_settings['data_center'] ?? '', 'com.au'); ?>>
-                            .com.au (Australia)
+                            <?php esc_html_e('.com.au (Australia)', 'woocommerce-zoho-integration'); ?>
                         </option>
                     </select>
                     <p class="description">
-                        <?php _e('Seleccione el centro de datos donde está alojada su cuenta de Zoho.', 'woocommerce-zoho-integration'); ?>
+                        <?php esc_html_e('Seleccione el centro de datos donde está alojada su cuenta de Zoho.', 'woocommerce-zoho-integration'); ?>
                     </p>
                 </td>
             </tr>

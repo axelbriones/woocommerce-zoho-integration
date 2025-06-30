@@ -92,9 +92,10 @@ abstract class WZI_API_Handler {
      * @param    string    $method      Método HTTP (GET, POST, PUT, DELETE).
      * @param    array     $data        Datos a enviar.
      * @param    array     $headers     Headers adicionales.
+     * @param    bool      $body_is_pre_formatted Si es true, $data se usa directamente como el cuerpo (debe ser string). Si es false, $data se codifica como JSON.
      * @return   array|WP_Error         Respuesta de la API o error.
      */
-    protected function make_request($endpoint, $method = 'GET', $data = array(), $headers = array()) {
+    protected function make_request($endpoint, $method = 'GET', $data = array(), $headers = array(), $body_is_pre_formatted = false) {
         // Obtener token de acceso
         $access_token = $this->auth->get_access_token($this->service);
         
@@ -134,7 +135,13 @@ abstract class WZI_API_Handler {
         
         // Añadir datos según el método
         if (in_array($method, array('POST', 'PUT', 'PATCH'))) {
-            $args['body'] = json_encode($data);
+            if ($body_is_pre_formatted) {
+                $args['body'] = $data; // $data ya es un string formateado (ej. query string)
+            } elseif (!empty($data)) {
+                $args['body'] = json_encode($data); // Comportamiento por defecto: codificar como JSON
+            } else {
+                $args['body'] = null; // Cuerpo explícitamente nulo si no hay datos y no es pre-formateado
+            }
         } elseif ($method === 'GET' && !empty($data)) {
             $url = add_query_arg($data, $url);
         }
@@ -282,10 +289,12 @@ abstract class WZI_API_Handler {
     }
 
     /**
-     * Actualizar información de rate limit.
+     * Actualizar información de rate limit basado en los headers de respuesta.
      *
      * @since    1.0.0
-     * @param    array    $headers    Headers de respuesta.
+     * @access   protected
+     * @param    array    $headers    Los headers de la respuesta de la API.
+     * @return   void
      */
     protected function update_rate_limit($headers) {
         if (isset($headers['x-rate-limit-limit'])) {
@@ -317,10 +326,14 @@ abstract class WZI_API_Handler {
     }
 
     /**
-     * Verificar límite de rate antes de hacer solicitud.
+     * Verificar límite de rate antes de hacer una solicitud.
+     *
+     * Comprueba si el límite de solicitudes se ha excedido basándose en la información
+     * almacenada en un transient.
      *
      * @since    1.0.0
-     * @return   bool    Si se puede hacer la solicitud.
+     * @access   protected
+     * @return   bool    True si se puede hacer la solicitud, false si se ha excedido el límite.
      */
     protected function check_rate_limit() {
         $rate_limit = get_transient('wzi_rate_limit_' . $this->service);
@@ -495,9 +508,12 @@ abstract class WZI_API_Handler {
     }
 
     /**
-     * Formatear datos para Zoho.
+     * Formatear datos para enviar a Zoho.
+     *
+     * Elimina campos vacíos y convierte booleanos a strings 'true'/'false'.
      *
      * @since    1.0.0
+     * @access   protected
      * @param    array    $data    Datos a formatear.
      * @return   array             Datos formateados.
      */
