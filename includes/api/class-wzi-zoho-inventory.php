@@ -311,7 +311,7 @@ class WZI_Zoho_Inventory extends WZI_API_Handler {
         // Crear ajuste de inventario
         $adjustment_data = array(
             'date' => date('Y-m-d'),
-            'reason' => 'WooCommerce Sync',
+            'reason' => __('WooCommerce Sync', 'woocommerce-zoho-integration'),
             'description' => sprintf(
                 __('Stock actualizado desde WooCommerce. Anterior: %d, Nuevo: %d', 'woocommerce-zoho-integration'),
                 $current_stock,

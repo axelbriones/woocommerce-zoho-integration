@@ -1,0 +1,161 @@
+/**
+ * All of the CSS for your admin-specific functionality should be
+ * included in this file.
+ */
+
+/* General Admin Page Styles */
+.wzi-admin-page .nav-tab-wrapper {
+    margin-bottom: 20px;
+}
+
+.wzi-admin-page h1 {
+    /* Styles for main page title */
+}
+
+.wzi-admin-page h2 {
+    /* Styles for section titles */
+    margin-top: 30px;
+    margin-bottom: 10px;
+}
+
+.wzi-admin-page .form-table {
+    /* Styles for settings tables */
+}
+
+.wzi-admin-page .form-table th {
+    width: 200px; /* Adjust as needed */
+}
+
+.wzi-admin-page .form-table td p.description {
+    font-size: 0.85em;
+    color: #666;
+}
+
+/* Settings Page Specific Styles */
+.wzi-settings-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: #fff;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+/* Sync Page Styles */
+#wzi-sync-controls table th,
+#wzi-sync-controls table td {
+    padding-top: 15px;
+    padding-bottom: 15px;
+}
+
+#wzi-sync-controls .spinner {
+    float: none;
+    vertical-align: middle;
+    margin-left: 5px;
+}
+
+#wzi-sync-feedback {
+    margin-top: 15px;
+    padding: 10px;
+    border-left-width: 4px;
+    border-left-style: solid;
+}
+#wzi-sync-feedback.success,
+#wzi-sync-feedback.updated {
+    border-left-color: #46b450; /* WordPress green */
+    background-color: #f7f7f7;
+}
+#wzi-sync-feedback.error {
+    border-left-color: #dc3232; /* WordPress red */
+    background-color: #f7f7f7;
+}
+
+
+/* Logs Page Styles */
+#wzi-logs-filter .search-box {
+    margin-bottom: 10px;
+}
+/* WP_List_Table styles are mostly handled by WordPress core, but you can add overrides */
+.wp-list-table .column-log_level {
+    width: 10%;
+}
+.wp-list-table .column-timestamp {
+    width: 15%;
+}
+.wp-list-table .column-source {
+    width: 15%;
+}
+.wp-list-table .column-message {
+    width: auto; /* Takes remaining space */
+}
+
+/* Help Page Styles */
+.wzi-help-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: #fff;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+.wzi-help-section h2 {
+    margin-top:0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+.wzi-help-section h4 {
+    margin-top: 20px;
+    margin-bottom: 5px;
+}
+.wzi-help-section ul, .wzi-help-section ol {
+    margin-left: 20px;
+}
+.wzi-help-section ul li, .wzi-help-section ol li {
+    margin-bottom: 8px;
+}
+.wzi-help-section code {
+    background-color: #f3f3f3;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+.wzi-help-section textarea {
+    background-color: #f9f9f9;
+    border-color: #ccc;
+    padding: 10px;
+}
+
+/* API Status indicators */
+.wzi-api-status {
+    padding: 5px 10px;
+    border-radius: 3px;
+    color: #fff;
+    font-weight: bold;
+    display: inline-block;
+    margin-left: 10px;
+}
+.wzi-api-status.connected {
+    background-color: #28a745; /* Green */
+}
+.wzi-api-status.disconnected {
+    background-color: #dc3545; /* Red */
+}
+.wzi-api-status.pending {
+    background-color: #ffc107; /* Yellow */
+    color: #333;
+}
+
+/* Button styles */
+.wzi-admin-page .button-danger {
+    background: #dc3232;
+    border-color: #dc3232 #c62828 #c62828;
+    box-shadow: 0 1px 0 #c62828;
+    color: #fff;
+    text-decoration: none;
+    text-shadow: 0 -1px 1px #c62828, 1px 0 1px #c62828, 0 1px 1px #c62828, -1px 0 1px #c62828;
+}
+.wzi-admin-page .button-danger:hover,
+.wzi-admin-page .button-danger:focus {
+    background: #c62828;
+    border-color: #b02323;
+    color: #fff;
+}
+
+/* Add more specific styles as needed */

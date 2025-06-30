@@ -449,7 +449,7 @@ class WZI_Admin {
         }
 
         global $wpdb;
-        $mapping_table = $wpdb->prefix . 'wzi_field_mappings';
+        $mapping_table = $wpdb->prefix . 'wzi_field_mapping'; // Unificado a singular
 
         // Primero, desactivar todos los mapeos existentes para este tipo
         $wpdb->update(

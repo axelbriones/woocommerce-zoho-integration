@@ -329,9 +329,13 @@ class WZI_Main {
     }
 
     /**
-     * Manejar callback de OAuth
+     * Manejar callback de OAuth.
+     *
+     * Se ejecuta durante la inicialización del admin para procesar el código de autorización
+     * devuelto por Zoho después de que el usuario autoriza la aplicación.
      *
      * @since    1.0.0
+     * @return   void
      */
     public function handle_oauth_callback() {
         if (isset($_GET['page']) && $_GET['page'] === 'wzi-settings' && 
@@ -352,9 +356,11 @@ class WZI_Main {
     }
 
     /**
-     * Ejecutar sincronización automática
+     * Ejecutar sincronización automática.
+     * Callback para la acción cron 'wzi_auto_sync'.
      *
      * @since    1.0.0
+     * @return   void
      */
     public function run_auto_sync() {
         $sync_manager = new WZI_Sync_Manager();
@@ -362,9 +368,11 @@ class WZI_Main {
     }
 
     /**
-     * Limpiar logs antiguos
+     * Limpiar logs antiguos.
+     * Callback para la acción cron 'wzi_cleanup_logs'.
      *
      * @since    1.0.0
+     * @return   void
      */
     public function cleanup_old_logs() {
         $logger = new WZI_Logger();
@@ -372,9 +380,11 @@ class WZI_Main {
     }
 
     /**
-     * Procesar cola de sincronización
+     * Procesar cola de sincronización.
+     * Callback para la acción cron 'wzi_process_sync_queue'.
      *
      * @since    1.0.0
+     * @return   void
      */
     public function process_sync_queue() {
         $sync_manager = new WZI_Sync_Manager();
@@ -382,11 +392,12 @@ class WZI_Main {
     }
 
     /**
-     * Añadir intervalos personalizados de cron
+     * Añadir intervalos personalizados de cron.
+     * Callback para el filtro 'cron_schedules'.
      *
      * @since    1.0.0
-     * @param    array    $schedules    Intervalos existentes.
-     * @return   array                  Intervalos modificados.
+     * @param    array    $schedules    Intervalos existentes de WordPress.
+     * @return   array                  Intervalos modificados con las adiciones del plugin.
      */
     public function add_cron_intervals($schedules) {
         $schedules['wzi_five_minutes'] = array(
@@ -403,9 +414,11 @@ class WZI_Main {
     }
 
     /**
-     * Refrescar todos los tokens
+     * Refrescar todos los tokens.
+     * Callback para la acción 'wzi_refresh_tokens'.
      *
      * @since    1.0.0
+     * @return   void
      */
     public function refresh_all_tokens() {
         $auth = new WZI_Zoho_Auth();
@@ -413,9 +426,11 @@ class WZI_Main {
     }
 
     /**
-     * Registrar endpoints de webhooks
+     * Registrar endpoints de webhooks.
+     * Callback para la acción 'rest_api_init'.
      *
      * @since    1.0.0
+     * @return   void
      */
     public function register_webhook_endpoints() {
         register_rest_route('wzi/v1', '/webhook/(?P<service>[a-zA-Z]+)', array(

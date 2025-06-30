@@ -599,11 +599,11 @@ class WZI_Settings {
         $base_url = rest_url('wzi/v1/webhook/');
         ?>
         <div class="wzi-webhook-urls">
-            <p><strong><?php _e('URLs de Webhook para configurar en Zoho:', 'woocommerce-zoho-integration'); ?></strong></p>
-            <p>CRM: <code><?php echo esc_url($base_url . 'crm'); ?></code></p>
-            <p>Inventory: <code><?php echo esc_url($base_url . 'inventory'); ?></code></p>
-            <p>Books: <code><?php echo esc_url($base_url . 'books'); ?></code></p>
-            <p>Campaigns: <code><?php echo esc_url($base_url . 'campaigns'); ?></code></p>
+            <p><strong><?php esc_html_e('URLs de Webhook para configurar en Zoho:', 'woocommerce-zoho-integration'); ?></strong></p>
+            <p><?php esc_html_e('CRM:', 'woocommerce-zoho-integration'); ?> <code><?php echo esc_url($base_url . 'crm'); ?></code></p>
+            <p><?php esc_html_e('Inventory:', 'woocommerce-zoho-integration'); ?> <code><?php echo esc_url($base_url . 'inventory'); ?></code></p>
+            <p><?php esc_html_e('Books:', 'woocommerce-zoho-integration'); ?> <code><?php echo esc_url($base_url . 'books'); ?></code></p>
+            <p><?php esc_html_e('Campaigns:', 'woocommerce-zoho-integration'); ?> <code><?php echo esc_url($base_url . 'campaigns'); ?></code></p>
         </div>
         <?php
     }

@@ -209,16 +209,20 @@ class WZI_Zoho_CRM extends WZI_API_Handler {
             return $response;
         }
         
-        if (isset($response['data']['data'][0])) {
-            $record = $response['data']['data'][0];
+        // Zoho CRM API v2+ response structure for successful single record creation:
+        // $response['data']['data'][0] contains an object like:
+        // { "code": "SUCCESS", "details": { "Modified_Time": "...", "id": "...", ... }, "message": "record added", "status": "success" }
+        if (isset($response['data']['data'][0]['code']) && $response['data']['data'][0]['code'] === 'SUCCESS' && isset($response['data']['data'][0]['details'])) {
+            $record_details = $response['data']['data'][0]['details'];
             
-            // Limpiar cache relacionado
-            $this->clear_cache($module);
+            $this->clear_cache($module); // Limpiar caché para este módulo
             
-            return $record;
+            $this->logger->info(sprintf('Record created successfully in module %s. Zoho ID: %s', $module, $record_details['id'] ?? 'N/A'), $record_details);
+            return $record_details; // Devolver solo los detalles del registro (incluyendo ID)
         }
         
-        return new WP_Error('create_failed', __('No se pudo crear el registro', 'woocommerce-zoho-integration'));
+        $this->logger->error(sprintf('Failed to create record in module %s or unexpected success response structure.', $module), $response['data'] ?? $response);
+        return new WP_Error('create_failed_unexpected_response', __('No se pudo crear el registro o la respuesta fue inesperada.', 'woocommerce-zoho-integration'), $response['data'] ?? $response);
     }
 
     /**
@@ -247,17 +251,21 @@ class WZI_Zoho_CRM extends WZI_API_Handler {
         if (is_wp_error($response)) {
             return $response;
         }
-        
-        if (isset($response['data']['data'][0])) {
-            $record = $response['data']['data'][0];
-            
-            // Limpiar cache relacionado
-            $this->clear_cache($module);
-            
-            return $record;
+
+        // Zoho CRM API v2+ response structure for successful single record update:
+        // Similar to create, it returns status for each record in the 'data' array.
+        if (isset($response['data']['data'][0]['code']) && $response['data']['data'][0]['code'] === 'SUCCESS' && isset($response['data']['data'][0]['details'])) {
+            $record_details = $response['data']['data'][0]['details'];
+
+            $this->clear_cache($module); // Limpiar caché para este módulo
+            $this->clear_cache($module . '_' . $id); // Limpiar caché específico del registro si existe
+
+            $this->logger->info(sprintf('Record updated successfully in module %s. Zoho ID: %s', $module, $id), $record_details);
+            return $record_details; // Devolver solo los detalles del registro (incluyendo ID)
         }
         
-        return new WP_Error('update_failed', __('No se pudo actualizar el registro', 'woocommerce-zoho-integration'));
+        $this->logger->error(sprintf('Failed to update record in module %s, ID: %s or unexpected success response structure.', $module, $id), $response['data'] ?? $response);
+        return new WP_Error('update_failed_unexpected_response', __('No se pudo actualizar el registro o la respuesta fue inesperada.', 'woocommerce-zoho-integration'), $response['data'] ?? $response);
     }
 
     /**
@@ -503,6 +511,7 @@ class WZI_Zoho_CRM extends WZI_API_Handler {
      * Mapear estado de pedido a estado de orden de venta.
      *
      * @since    1.0.0
+     * @access   private
      * @param    string    $status    Estado del pedido.
      * @return   string              Estado de la orden de venta.
      */
@@ -524,6 +533,97 @@ class WZI_Zoho_CRM extends WZI_API_Handler {
 
     /**
      * Obtener descripción del pedido.
+     *
+     * @since    1.0.0
+     * @access   private
+     * @param    WC_Order $order Pedido de WooCommerce.
+     * @return   string          Descripción formateada del pedido.
+     */
+    private function get_order_description($order) {
+        $items = array();
+
+        foreach ($order->get_items() as $item) {
+            $items[] = sprintf('%s x %d', $item->get_name(), $item->get_quantity());
+        }
+
+        $description = sprintf(
+            __("Pedido #%s\nFecha: %s\nProductos:\n%s\n\nTotal: %s", 'woocommerce-zoho-integration'),
+            $order->get_order_number(),
+            $order->get_date_created()->format('Y-m-d H:i:s'),
+            implode("\n", $items),
+            $order->get_formatted_order_total()
+        );
+
+        if ($order->get_customer_note()) {
+            $description .= "\n\n" . __('Nota del cliente:', 'woocommerce-zoho-integration') . "\n" . $order->get_customer_note();
+        }
+
+        return $description;
+    }
+
+    /**
+     * Obtener los campos disponibles para un módulo específico de Zoho CRM.
+     *
+     * Consulta la API de metadatos de Zoho CRM para obtener los campos y los cachea.
+     *
+     * @since    1.0.0
+     * @param    string $module_api_name El nombre API del módulo (ej. "Contacts", "Leads").
+     * @return   array|WP_Error Un array de campos formateados o WP_Error si falla.
+     *                           Cada campo es un array con 'api_name', 'field_label', 'data_type'.
+     */
+    public function get_available_fields_for_module($module_api_name) {
+        if (!in_array($module_api_name, $this->modules)) {
+            return new WP_Error('invalid_crm_module', __('Módulo de CRM no válido o no soportado.', 'woocommerce-zoho-integration'));
+        }
+
+        $cache_key = 'crm_fields_' . $module_api_name;
+        $cached_fields = $this->cache($cache_key, null, HOUR_IN_SECONDS * 24); // Cache por 24 horas
+
+        if ($cached_fields !== false && is_array($cached_fields)) {
+            $this->logger->debug("Campos para el módulo CRM {$module_api_name} cargados desde caché.", array('count' => count($cached_fields)));
+            return $cached_fields;
+        }
+
+        $response = $this->get('settings/fields', array('module' => $module_api_name));
+
+        if (is_wp_error($response)) {
+            $this->logger->error("Error al obtener campos para el módulo CRM {$module_api_name}.", array(
+                'error_code' => $response->get_error_code(),
+                'error_message' => $response->get_error_message(),
+            ));
+            return $response;
+        }
+
+        if (!isset($response['data']['fields']) || !is_array($response['data']['fields'])) {
+            $this->logger->warning("Respuesta inesperada al obtener campos para el módulo CRM {$module_api_name}.", $response);
+            return new WP_Error('crm_fields_unexpected_response', __('Respuesta inesperada de la API de Zoho al obtener campos.', 'woocommerce-zoho-integration'));
+        }
+
+        $formatted_fields = array();
+        foreach ($response['data']['fields'] as $field) {
+            if (isset($field['api_name']) && isset($field['field_label']) && isset($field['data_type'])) {
+                // Considerar solo campos que no sean de solo lectura o sistema si es necesario
+                // if (isset($field['read_only']) && $field['read_only'] === true) continue;
+                // if (isset($field['system_mandatory']) && $field['system_mandatory'] === true && $field['api_name'] === 'Owner') continue; // Ejemplo
+
+                $formatted_fields[] = array(
+                    'api_name'    => $field['api_name'],
+                    'field_label' => $field['field_label'],
+                    'data_type'   => $field['data_type'],
+                    // 'picklist_values' => isset($field['pick_list_values']) ? $field['pick_list_values'] : array(), // Útil para picklists
+                    // 'is_custom_field' => isset($field['custom_field']) ? $field['custom_field'] : false,
+                );
+            }
+        }
+
+        $this->logger->info("Campos para el módulo CRM {$module_api_name} obtenidos de la API y cacheados.", array('count' => count($formatted_fields)));
+        $this->cache($cache_key, $formatted_fields, HOUR_IN_SECONDS * 24);
+
+        return $formatted_fields;
+    }
+
+    /**
+     * Obtener productos desde CRM.
      *
      * @since    1.0.0
      * @param    WC_Order    $order    Pedido.
