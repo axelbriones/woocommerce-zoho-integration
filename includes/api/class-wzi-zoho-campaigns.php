@@ -103,7 +103,8 @@ class WZI_Zoho_Campaigns extends WZI_API_Handler {
             $endpoint,
             'POST',
             http_build_query($payload), // Convierte el array a una cadena de form data
-            $custom_headers
+            $custom_headers,
+            true // Indicar que el cuerpo está pre-formateado
         );
 
 
