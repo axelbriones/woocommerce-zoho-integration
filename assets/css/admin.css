@@ -1,0 +1,602 @@
+/**
+ * Estilos del área de administración del plugin
+ *
+ * @link       https://tudominio.com
+ * @since      1.0.0
+ *
+ * @package    WooCommerce_Zoho_Integration
+ * @subpackage WooCommerce_Zoho_Integration/assets/css
+ */
+
+/* Variables CSS */
+:root {
+    --wzi-primary: #007cba;
+    --wzi-primary-hover: #005a87;
+    --wzi-success: #46b450;
+    --wzi-error: #dc3232;
+    --wzi-warning: #f56e28;
+    --wzi-info: #00a0d2;
+    --wzi-border: #ccd0d4;
+    --wzi-background: #f1f1f1;
+    --wzi-card-bg: #ffffff;
+    --wzi-text: #23282d;
+    --wzi-text-light: #666;
+}
+
+/* Estilos generales */
+.wzi-wrap {
+    margin: 20px 20px 20px 0;
+    max-width: 1400px;
+}
+
+.wzi-wrap h1 {
+    font-size: 23px;
+    font-weight: 400;
+    margin: 0 0 20px;
+    padding: 9px 0 4px;
+    line-height: 1.3;
+}
+
+.wzi-wrap h2 {
+    font-size: 18px;
+    font-weight: 400;
+    margin: 30px 0 20px;
+}
+
+.wzi-wrap h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 20px 0 15px;
+}
+
+/* Cards */
+.wzi-card {
+    background: var(--wzi-card-bg);
+    border: 1px solid var(--wzi-border);
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.wzi-card h3 {
+    margin-top: 0;
+}
+
+/* Grid de cards */
+.wzi-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+/* Estados de conexión */
+.connection-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-weight: 500;
+}
+
+.connection-status.connected {
+    background: #d4edda;
+    color: #155724;
+}
+
+.connection-status.disconnected {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.connection-status .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+/* Estados de sincronización */
+.sync-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sync-status.running {
+    color: var(--wzi-warning);
+}
+
+.sync-status.idle {
+    color: var(--wzi-success);
+}
+
+.sync-status.error {
+    color: var(--wzi-error);
+}
+
+/* Barra de progreso */
+.wzi-progress-bar {
+    background: var(--wzi-background);
+    height: 20px;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 10px 0;
+}
+
+.wzi-progress-fill {
+    background: var(--wzi-primary);
+    height: 100%;
+    transition: width 0.3s ease;
+    position: relative;
+}
+
+.wzi-progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(
+        45deg,
+        rgba(255,255,255,.2) 25%,
+        transparent 25%,
+        transparent 50%,
+        rgba(255,255,255,.2) 50%,
+        rgba(255,255,255,.2) 75%,
+        transparent 75%,
+        transparent
+    );
+    background-size: 30px 30px;
+    animation: wzi-progress-stripes 1s linear infinite;
+}
+
+@keyframes wzi-progress-stripes {
+    0% { background-position: 0 0; }
+    100% { background-position: 30px 30px; }
+}
+
+/* Estadísticas */
+.wzi-stats {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+    padding: 20px 0;
+}
+
+.wzi-stat {
+    flex: 1;
+}
+
+.wzi-stat-value {
+    display: block;
+    font-size: 32px;
+    font-weight: 600;
+    line-height: 1;
+    margin-bottom: 5px;
+}
+
+.wzi-stat-label {
+    display: block;
+    font-size: 14px;
+    color: var(--wzi-text-light);
+}
+
+.wzi-stat.success .wzi-stat-value {
+    color: var(--wzi-success);
+}
+
+.wzi-stat.error .wzi-stat-value {
+    color: var(--wzi-error);
+}
+
+/* Tabs de navegación */
+.wzi-tabs {
+    border-bottom: 1px solid var(--wzi-border);
+    margin-bottom: 20px;
+}
+
+.wzi-tabs .nav-tab-wrapper {
+    border-bottom: none;
+}
+
+.wzi-tabs .nav-tab {
+    margin-left: 0;
+    margin-right: 0.5em;
+}
+
+/* Formularios */
+.wzi-form-table th {
+    width: 250px;
+    padding-right: 20px;
+}
+
+.wzi-form-table td {
+    padding: 15px 10px;
+}
+
+.wzi-form-table input[type="text"],
+.wzi-form-table input[type="email"],
+.wzi-form-table input[type="password"],
+.wzi-form-table input[type="number"],
+.wzi-form-table select,
+.wzi-form-table textarea {
+    width: 100%;
+    max-width: 400px;
+}
+
+.wzi-form-table .description {
+    font-style: normal;
+    color: var(--wzi-text-light);
+    margin-top: 5px;
+}
+
+/* Botones */
+.wzi-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    font-size: 13px;
+    line-height: 1.5;
+    border-radius: 3px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.wzi-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+
+.wzi-button.primary {
+    background: var(--wzi-primary);
+    color: #fff;
+    border: 1px solid var(--wzi-primary);
+}
+
+.wzi-button.primary:hover {
+    background: var(--wzi-primary-hover);
+    border-color: var(--wzi-primary-hover);
+    color: #fff;
+}
+
+.wzi-button-group {
+    display: flex;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+/* Mensajes y notificaciones */
+.wzi-notice {
+    padding: 15px;
+    margin: 20px 0;
+    border-radius: 4px;
+    border-left: 4px solid;
+}
+
+.wzi-notice.success {
+    background: #d4edda;
+    border-color: var(--wzi-success);
+    color: #155724;
+}
+
+.wzi-notice.error {
+    background: #f8d7da;
+    border-color: var(--wzi-error);
+    color: #721c24;
+}
+
+.wzi-notice.warning {
+    background: #fff3cd;
+    border-color: var(--wzi-warning);
+    color: #856404;
+}
+
+.wzi-notice.info {
+    background: #d1ecf1;
+    border-color: var(--wzi-info);
+    color: #0c5460;
+}
+
+/* Tabla de logs */
+.wzi-logs-table {
+    background: var(--wzi-card-bg);
+    border: 1px solid var(--wzi-border);
+    border-radius: 4px;
+}
+
+.wzi-logs-table thead {
+    background: var(--wzi-background);
+}
+
+.wzi-logs-table th {
+    padding: 10px;
+    text-align: left;
+    font-weight: 600;
+}
+
+.wzi-logs-table td {
+    padding: 10px;
+    border-top: 1px solid var(--wzi-border);
+}
+
+.wzi-logs-table .status-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.wzi-logs-table .status-badge.success {
+    background: var(--wzi-success);
+    color: #fff;
+}
+
+.wzi-logs-table .status-badge.error {
+    background: var(--wzi-error);
+    color: #fff;
+}
+
+.wzi-logs-table .status-badge.warning {
+    background: var(--wzi-warning);
+    color: #fff;
+}
+
+.wzi-logs-table .status-badge.info {
+    background: var(--wzi-info);
+    color: #fff;
+}
+
+/* Mapeo de campos */
+.wzi-field-mapping {
+    background: var(--wzi-card-bg);
+    padding: 20px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.wzi-field-mapping-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.wzi-field-mapping-table th {
+    background: var(--wzi-background);
+    padding: 10px;
+    text-align: left;
+    font-weight: 600;
+}
+
+.wzi-field-mapping-table td {
+    padding: 10px;
+    border-bottom: 1px solid var(--wzi-border);
+}
+
+.wzi-field-mapping-table select,
+.wzi-field-mapping-table input[type="text"] {
+    width: 100%;
+}
+
+.wzi-add-mapping {
+    margin-top: 10px;
+}
+
+/* Loader / Spinner */
+.wzi-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(0,0,0,.1);
+    border-radius: 50%;
+    border-top-color: var(--wzi-primary);
+    animation: wzi-spin 1s ease-in-out infinite;
+}
+
+@keyframes wzi-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Dashboard específico */
+.wzi-dashboard .wzi-quick-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.wzi-dashboard .wzi-quick-stat {
+    background: var(--wzi-card-bg);
+    padding: 20px;
+    border-radius: 4px;
+    border: 1px solid var(--wzi-border);
+    text-align: center;
+}
+
+.wzi-dashboard .wzi-quick-stat .value {
+    font-size: 36px;
+    font-weight: 600;
+    line-height: 1;
+    margin-bottom: 5px;
+}
+
+.wzi-dashboard .wzi-quick-stat .label {
+    color: var(--wzi-text-light);
+    font-size: 14px;
+}
+
+/* Configuración de API */
+.wzi-api-config .service-card {
+    background: var(--wzi-card-bg);
+    border: 1px solid var(--wzi-border);
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.wzi-api-config .service-card.connected {
+    border-left: 4px solid var(--wzi-success);
+}
+
+.wzi-api-config .service-card.disconnected {
+    border-left: 4px solid var(--wzi-error);
+}
+
+.wzi-api-config .service-card h4 {
+    margin-top: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.wzi-api-config .service-logo {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+/* Webhooks */
+.wzi-webhook-urls {
+    background: var(--wzi-background);
+    padding: 15px;
+    border-radius: 4px;
+    margin: 20px 0;
+}
+
+.wzi-webhook-urls code {
+    display: block;
+    padding: 10px;
+    background: var(--wzi-card-bg);
+    border: 1px solid var(--wzi-border);
+    border-radius: 3px;
+    margin: 5px 0;
+    word-break: break-all;
+    font-size: 12px;
+}
+
+/* Responsive */
+@media screen and (max-width: 782px) {
+    .wzi-cards-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .wzi-stats {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .wzi-button-group {
+        flex-direction: column;
+    }
+    
+    .wzi-form-table th {
+        width: auto;
+        display: block;
+        padding-bottom: 5px;
+    }
+    
+    .wzi-form-table td {
+        display: block;
+        padding-left: 0;
+    }
+}
+
+/* Animaciones */
+.wzi-fade-in {
+    animation: wzi-fadeIn 0.3s ease-in;
+}
+
+@keyframes wzi-fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Tooltips */
+.wzi-tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+}
+
+.wzi-tooltip .wzi-tooltiptext {
+    visibility: hidden;
+    width: 200px;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    border-radius: 4px;
+    padding: 8px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -100px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 12px;
+}
+
+.wzi-tooltip:hover .wzi-tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Estados de elementos */
+.wzi-disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.wzi-loading {
+    position: relative;
+    pointer-events: none;
+}
+
+.wzi-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255,255,255,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Iconos personalizados */
+.wzi-icon {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    vertical-align: middle;
+}
+
+.wzi-icon-sync {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0020 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 004 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z' fill='%23007cba'/%3E%3C/svg%3E");
+}
+
+/* Utilidades */
+.wzi-text-center { text-align: center; }
+.wzi-text-right { text-align: right; }
+.wzi-text-left { text-align: left; }
+.wzi-mt-10 { margin-top: 10px; }
+.wzi-mt-20 { margin-top: 20px; }
+.wzi-mb-10 { margin-bottom: 10px; }
+.wzi-mb-20 { margin-bottom: 20px; }
+.wzi-p-10 { padding: 10px; }
+.wzi-p-20 { padding: 20px; }
