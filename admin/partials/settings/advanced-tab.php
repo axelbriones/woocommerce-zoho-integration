@@ -11,21 +11,12 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// Si hay opciones para la pestaña avanzada, se registrarían con un grupo como 'wzi_advanced_settings_group'
-// settings_fields('wzi_advanced_settings_group');
-// do_settings_sections('wzi_advanced_settings');
 ?>
-<div class="wrap">
-    <p><?php esc_html_e('Configuraciones avanzadas para la integración de WooCommerce con Zoho.', 'woocommerce-zoho-integration'); ?></p>
-
+<form method="post" action="options.php">
     <?php
-    // Aquí irían los campos para las configuraciones avanzadas.
-    // Por ejemplo, opciones de debug, timeouts, comportamiento de la cola, etc.
-
-    // Si hay un botón de guardado general para algunas opciones de esta pestaña:
-    // submit_button(__('Guardar Configuración Avanzada', 'woocommerce-zoho-integration'));
+    settings_fields('wzi_advanced_settings_group'); // Nombre del grupo de opciones
+    do_settings_sections('wzi_advanced_settings');    // ID/slug de la página de opciones donde se registró la sección
+    submit_button(__('Guardar Configuración Avanzada', 'woocommerce-zoho-integration'));
     ?>
-     <div class="notice notice-info inline">
-        <p><?php esc_html_e('Actualmente no hay configuraciones avanzadas definidas. Esta pestaña se utilizará para futuras opciones.', 'woocommerce-zoho-integration'); ?></p>
-    </div>
+</form>
 </div>

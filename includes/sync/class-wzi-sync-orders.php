@@ -2,7 +2,7 @@
 /**
  * Sincronización de pedidos
  *
- * @link       https://tudominio.com
+ * @link       https://github.com/axelbriones/woocommerce-zoho-integration
  * @since      1.0.0
  *
  * @package    WooCommerce_Zoho_Integration
@@ -18,99 +18,68 @@
  * @since      1.0.0
  * @package    WooCommerce_Zoho_Integration
  * @subpackage WooCommerce_Zoho_Integration/includes/sync
- * @author     Tu Nombre <tu@email.com>
+ * @author     Axel Briones <axel@bbrion.es>
  */
 class WZI_Sync_Orders {
 
     /**
      * API de Zoho CRM.
-     *
-     * @since    1.0.0
-     * @access   private
-     * @var      WZI_Zoho_CRM    $crm_api    Instancia de la API de CRM.
+     * @var WZI_Zoho_CRM
      */
     private $crm_api;
 
     /**
      * Logger.
-     *
-     * @since    1.0.0
-     * @access   private
-     * @var      WZI_Logger    $logger    Instancia del logger.
+     * @var WZI_Logger
      */
     private $logger;
 
     /**
      * Sincronizador de clientes.
-     *
-     * @since    1.0.0
-     * @access   private
-     * @var      WZI_Sync_Customers    $customer_sync    Instancia del sincronizador de clientes.
+     * @var WZI_Sync_Customers|null
      */
     private $customer_sync;
 
     /**
-     * Mapeo de campos.
-     *
-     * @since    1.0.0
-     * @access   private
-     * @var      array    $field_mapping    Mapeo de campos entre WooCommerce y Zoho.
+     * Mapeo de campos para pedidos.
+     * @var array
      */
     private $field_mapping = array();
 
-    /**
-     * Meta key para almacenar ID de Deal de Zoho.
-     *
-     * @since    1.0.0
-     * @access   private
-     * @var      string    $zoho_deal_meta_key    Meta key.
-     */
     private $zoho_deal_meta_key = '_wzi_zoho_deal_id';
-
-    /**
-     * Meta key para almacenar ID de Sales Order de Zoho.
-     *
-     * @since    1.0.0
-     * @access   private
-     * @var      string    $zoho_so_meta_key    Meta key.
-     */
     private $zoho_so_meta_key = '_wzi_zoho_sales_order_id';
-
-    /**
-     * Meta key para almacenar fecha de última sincronización.
-     *
-     * @since    1.0.0
-     * @access   private
-     * @var      string    $last_sync_meta_key    Meta key.
-     */
     private $last_sync_meta_key = '_wzi_order_last_sync';
+    private $zoho_product_meta_key = '_wzi_zoho_product_id'; // Asegúrate que este sea el metakey correcto para el ID de producto de Zoho CRM
 
-    /**
-     * Constructor.
-     *
-     * @since    1.0.0
-     */
     public function __construct() {
         $this->crm_api = new WZI_Zoho_CRM();
         $this->logger = new WZI_Logger();
-        $this->customer_sync = new WZI_Sync_Customers();
         
-        // Cargar mapeo de campos
+        if (class_exists('WZI_Sync_Customers')) {
+            $this->customer_sync = new WZI_Sync_Customers();
+        } else {
+            if(isset($this->logger)) $this->logger->error('WZI_Sync_Customers class not found during WZI_Sync_Orders instantiation.');
+            $this->customer_sync = null;
+        }
+        // No inicializamos Inventory y Books API aquí a menos que sean siempre necesarias.
+        // Se pueden instanciar bajo demanda en los métodos que las usen.
         $this->load_field_mapping();
     }
 
     /**
-     * Cargar mapeo de campos desde la base de datos.
+     * Cargar mapeo de campos desde la base de datos para pedidos.
      *
      * @since    1.0.0
+     * @access   private
      */
     private function load_field_mapping() {
         global $wpdb;
+        $this->field_mapping = array();
         
-        $mapping_table = $wpdb->prefix . 'wzi_field_mapping'; // Unificado a singular
+        $mapping_table = $wpdb->prefix . 'wzi_field_mapping';
         
         $mappings = $wpdb->get_results($wpdb->prepare(
-            "SELECT * FROM {$mapping_table} 
+            "SELECT woo_field, zoho_field, sync_direction, transform_function FROM {$mapping_table}
              WHERE entity_type = %s AND is_active = 1",
             'order'
         ));
@@ -136,34 +105,112 @@ class WZI_Sync_Orders {
      * @return   array    Mapeo por defecto.
      */
     private function get_default_field_mapping() {
+        // Estos mapeos por defecto pueden apuntar a campos de 'Deals' o 'Sales_Orders' en Zoho CRM.
+        // La UI de mapeo permitiría al usuario refinar esto.
+        // Los nombres de zoho_field aquí son ejemplos comunes.
         return array(
-            'order_number' => array(
-                'zoho_field' => 'Subject',
-                'sync_direction' => 'both',
+            'order_number' => array( // WC_Order->get_order_number()
+                'zoho_field' => 'Deal_Name', // Para Deals. Para Sales_Orders sería 'Subject'.
+                'sync_direction' => 'wc_to_zoho',
                 'transform_function' => null,
             ),
-            'total' => array(
-                'zoho_field' => 'Grand_Total',
-                'sync_direction' => 'both',
+            'total' => array( // WC_Order->get_total()
+                'zoho_field' => 'Amount', // Para Deals. Para Sales_Orders sería 'Grand_Total'.
+                'sync_direction' => 'wc_to_zoho',
                 'transform_function' => null,
             ),
-            'status' => array(
-                'zoho_field' => 'Status',
-                'sync_direction' => 'both',
-                'transform_function' => 'wzi_transform_order_status',
+            'status' => array( // WC_Order->get_status()
+                'zoho_field' => 'Stage', // Para Deals. Para Sales_Orders sería 'Status'.
+                'sync_direction' => 'wc_to_zoho',
+                'transform_function' => 'wzi_map_order_status_to_deal_stage_helper', // O wzi_map_order_status_to_so_status_helper
             ),
-            'billing_email' => array(
-                'zoho_field' => 'Contact_Email',
-                'sync_direction' => 'both',
+            'customer_id' => array( // WC_Order->get_customer_id()
+                'zoho_field' => 'Contact_Name', // Este es un campo de lookup, la transform_function debería devolver { "id": "zoho_contact_id" }
+                'sync_direction' => 'wc_to_zoho',
+                'transform_function' => 'wzi_get_zoho_contact_id_from_wc_customer_id', // Necesita crearse
+            ),
+            'billing_company' => array( // WC_Order->get_billing_company()
+                'zoho_field' => 'Account_Name', // Este es un campo de lookup, similar a Contact_Name
+                'sync_direction' => 'wc_to_zoho',
+                'transform_function' => 'wzi_get_zoho_account_id_from_company_name', // Necesita crearse (más complejo, implica buscar/crear cuenta)
+            ),
+            'date_created_gmt' => array( // WC_Order->get_date_created()
+                'zoho_field' => 'Closing_Date', // Para Deals (espera YYYY-MM-DD). Para Sales_Orders podría ser 'Date' o 'Created_Time' (DateTime).
+                'sync_direction' => 'wc_to_zoho',
+                'transform_function' => 'wzi_format_date_for_zoho_crm_date', // Formatea a YYYY-MM-DD
+            ),
+            'currency' => array( // WC_Order->get_currency()
+                'zoho_field' => 'Currency', // Para Deals y Sales Orders (si soportan multimoneda y está habilitado en Zoho)
+                'sync_direction' => 'wc_to_zoho',
                 'transform_function' => null,
             ),
-            'date_created' => array(
-                'zoho_field' => 'Created_Time',
-                'sync_direction' => 'woo_to_zoho',
-                'transform_function' => null,
-            ),
+            // Ejemplo de cómo se mapearían campos de dirección (si Zoho module los tiene directamente)
+            // 'billing_email' => array(
+            //     'zoho_field' => 'Billing_Email', // Esto no existe directamente en Deals/SO, es a través del Contacto.
+            //     'sync_direction' => 'wc_to_zoho',
+            //     'transform_function' => null,
+            // ),
         );
     }
+
+    /**
+     * Helper para la función de transformación de estado de pedido a etapa de Deal.
+     *
+     * @param string $status Estado del pedido de WooCommerce.
+     * @return string Etapa del Deal en Zoho CRM.
+     */
+    public static function wzi_map_order_status_to_deal_stage_helper($status) {
+        $mapping = array(
+            'pending'    => 'Qualification',
+            'processing' => 'Proposal/Price Quote',
+            'on-hold'    => 'Negotiation/Review',
+            'completed'  => 'Closed Won',
+            'cancelled'  => 'Closed Lost',
+            'refunded'   => 'Closed Lost', // O una etapa personalizada
+            'failed'     => 'Closed Lost',
+        );
+        return $mapping[$status] ?? 'Qualification'; // Fallback
+    }
+
+    /**
+     * Helper para la función de transformación de estado de pedido a estado de Sales Order.
+     *
+     * @param string $status Estado del pedido de WooCommerce.
+     * @return string Estado de Sales Order en Zoho CRM.
+     */
+    public static function wzi_map_order_status_to_so_status_helper($status) {
+        $mapping = array(
+            'pending'    => 'Created',
+            'processing' => 'Approved',
+            'on-hold'    => 'On Hold',
+            'completed'  => 'Delivered', // O 'Fulfilled'
+            'cancelled'  => 'Cancelled',
+            'refunded'   => 'Cancelled',
+            'failed'     => 'Cancelled',
+        );
+        return $mapping[$status] ?? 'Created'; // Fallback
+    }
+
+    /**
+     * Helper para formatear fecha para campos de fecha de Zoho CRM (YYYY-MM-DD).
+     *
+     * @param string|WC_DateTime $date Objeto de fecha o string.
+     * @return string Fecha formateada o string vacío.
+     */
+    public static function wzi_format_date_for_zoho_crm_date($date) {
+        if ($date instanceof WC_DateTime) {
+            return $date->date('Y-m-d');
+        } elseif (is_string($date) && !empty($date)) {
+            try {
+                $dt = new DateTime($date);
+                return $dt->format('Y-m-d');
+            } catch (Exception $e) {
+                return '';
+            }
+        }
+        return '';
+    }
+
 
     /**
      * Sincronizar desde WooCommerce a Zoho.

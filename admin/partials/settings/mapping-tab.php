@@ -61,22 +61,25 @@ if (!defined('ABSPATH')) {
                     </td>
                 </tr>
             </table>
-            <button type="button" id="wzi_load_mapping_button" class="button button-secondary" disabled><?php esc_html_e('Cargar Campos para Mapeo', 'woocommerce-zoho-integration'); ?></button>
+            <button type="button" id="wzi_load_mapping_button" class="button button-secondary" disabled>
+                <?php esc_html_e('Cargar Campos para Mapeo', 'woocommerce-zoho-integration'); ?>
+                <span class="spinner" style="float: none; vertical-align: middle; margin-left: 5px;"></span>
+            </button>
         </div>
 
         <hr/>
 
         <div id="wzi_field_mapping_table_container">
-            <p class="description wzi-no-mapping-loaded"><?php esc_html_e('Seleccione los módulos de WooCommerce y Zoho para ver y configurar el mapeo de campos.', 'woocommerce-zoho-integration'); ?></p>
+            <p class="description wzi-no-mapping-loaded"><?php esc_html_e('Seleccione los módulos de WooCommerce y Zoho y luego haga clic en "Cargar Campos para Mapeo" para configurar las asignaciones de campos.', 'woocommerce-zoho-integration'); ?></p>
 
             <div id="wzi-mapping-table-render-area" style="display:none;">
                 <table class="wp-list-table widefat fixed striped wzi-mapping-table">
                     <thead>
                         <tr>
-                            <th style="width: 30%;"><?php esc_html_e('Campo WooCommerce', 'woocommerce-zoho-integration'); ?></th>
-                            <th style="width: 30%;"><?php esc_html_e('Campo Zoho', 'woocommerce-zoho-integration'); ?></th>
+                            <th style="width: 35%;"><?php esc_html_e('Campo WooCommerce', 'woocommerce-zoho-integration'); ?></th>
+                            <th style="width: 35%;"><?php esc_html_e('Campo Zoho', 'woocommerce-zoho-integration'); ?></th>
                             <th style="width: 20%;"><?php esc_html_e('Dirección Sinc.', 'woocommerce-zoho-integration'); ?></th>
-                            <th><?php esc_html_e('Acciones', 'woocommerce-zoho-integration'); ?></th>
+                            <th style="width: 10%;"><?php esc_html_e('Acciones', 'woocommerce-zoho-integration'); ?></th>
                         </tr>
                     </thead>
                     <tbody id="wzi-field-mapping-rows">
@@ -90,41 +93,53 @@ if (!defined('ABSPATH')) {
         <div id="wzi-mapping-feedback" style="margin-top: 20px;"></div>
 
         <p class="submit wzi-save-mapping-controls" style="display:none;">
-            <button type="button" id="wzi_save_mapping_button" class="button button-primary"><?php esc_html_e('Guardar Mapeos para este Módulo', 'woocommerce-zoho-integration'); ?></button>
-            <span class="spinner"></span>
+            <button type="button" id="wzi_save_mapping_button" class="button button-primary">
+                <?php esc_html_e('Guardar Mapeos para este Módulo', 'woocommerce-zoho-integration'); ?>
+                <span class="spinner" style="float: none; vertical-align: middle; margin-left: 5px;"></span>
+            </button>
         </p>
     </div>
 
     <script type="text/template" id="wzi-mapping-row-template">
-        <tr>
+        <tr class="wzi-mapping-row">
             <td>
                 <select class="wzi-wc-field-select" name="mappings[<%= index %>][wc_field]">
-                    <option value=""><?php echo esc_js(__('Seleccionar campo WC', 'woocommerce-zoho-integration')); ?></option>
-                    <% wcFields.forEach(function(field) { %>
-                        <option value="<%= field.id %>" data-type="<%= field.type %>"><%= field.name %></option>
+                    <option value=""><?php echo esc_js(__('Seleccionar campo WooCommerce', 'woocommerce-zoho-integration')); ?></option>
+                    <% wcFields.forEach(function(group) { %>
+                        <optgroup label="<%= group.group_name %>">
+                            <% group.fields.forEach(function(field) { %>
+                                <option value="<%= field.id %>" data-type="<%= field.type %>" <%= (typeof wc_field !== 'undefined' && wc_field === field.id) ? 'selected' : '' %>>
+                                    <%= field.name %>
+                                </option>
+                            <% }); %>
+                        </optgroup>
                     <% }); %>
-                    <option value="_custom_meta_"><?php echo esc_js(__('Campo Meta Personalizado', 'woocommerce-zoho-integration')); ?></option>
+                    <option value="_custom_meta_" <%= (typeof wc_field !== 'undefined' && wc_field === '_custom_meta_') ? 'selected' : '' %>>
+                        <?php echo esc_js(__('Campo Meta Personalizado', 'woocommerce-zoho-integration')); ?>
+                    </option>
                 </select>
-                <input type="text" class="wzi-wc-custom-meta-field" name="mappings[<%= index %>][wc_custom_meta]" placeholder="<?php echo esc_js(__('Nombre del Meta Key', 'woocommerce-zoho-integration')); ?>" style="display:none; margin-top:5px;" />
+                <input type="text" class="wzi-wc-custom-meta-field regular-text" name="mappings[<%= index %>][wc_custom_meta]" value="<%= typeof wc_custom_meta !== 'undefined' ? wc_custom_meta : '' %>" placeholder="<?php echo esc_js(__('Nombre del Meta Key', 'woocommerce-zoho-integration')); ?>" style="display:<%= (typeof wc_field !== 'undefined' && wc_field === '_custom_meta_') ? 'block' : 'none' %>; margin-top:5px;" />
             </td>
             <td>
                 <select class="wzi-zoho-field-select" name="mappings[<%= index %>][zoho_field]">
                     <option value=""><?php echo esc_js(__('Seleccionar campo Zoho', 'woocommerce-zoho-integration')); ?></option>
                     <% zohoFields.forEach(function(field) { %>
-                        <option value="<%= field.api_name %>" data-type="<%= field.data_type %>"><%= field.field_label %> (<%= field.api_name %>)</option>
+                        <option value="<%= field.api_name %>" data-type="<%= field.data_type %>" <%= (typeof zoho_field !== 'undefined' && zoho_field === field.api_name) ? 'selected' : '' %>>
+                            <%= field.field_label %> (<%= field.api_name %>)
+                        </option>
                     <% }); %>
                 </select>
             </td>
             <td>
                 <select name="mappings[<%= index %>][direction]">
-                    <option value="wc_to_zoho"><?php echo esc_js(__('WC → Zoho', 'woocommerce-zoho-integration')); ?></option>
-                    <option value="zoho_to_wc"><?php echo esc_js(__('Zoho → WC', 'woocommerce-zoho-integration')); ?></option>
-                    <option value="both"><?php echo esc_js(__('Ambos (Bidireccional)', 'woocommerce-zoho-integration')); ?></option>
+                    <option value="wc_to_zoho" <%= (typeof direction !== 'undefined' && direction === 'wc_to_zoho') ? 'selected' : '' %>><?php echo esc_js(__('WC → Zoho', 'woocommerce-zoho-integration')); ?></option>
+                    <option value="zoho_to_wc" <%= (typeof direction !== 'undefined' && direction === 'zoho_to_wc') ? 'selected' : '' %>><?php echo esc_js(__('Zoho → WC', 'woocommerce-zoho-integration')); ?></option>
+                    <option value="both" <%= (typeof direction !== 'undefined' && direction === 'both') ? 'selected' : '' %>><?php echo esc_js(__('Ambos (Bidireccional)', 'woocommerce-zoho-integration')); ?></option>
                 </select>
             </td>
             <td>
-                <button type="button" class="button wzi-remove-mapping-row">
-                    <span class="dashicons dashicons-trash"></span> <?php echo esc_js(__('Quitar', 'woocommerce-zoho-integration')); ?>
+                <button type="button" class="button button-link-delete wzi-remove-mapping-row" title="<?php echo esc_attr__('Quitar este mapeo', 'woocommerce-zoho-integration'); ?>">
+                    <span class="dashicons dashicons-no-alt"></span>
                 </button>
             </td>
         </tr>
@@ -132,13 +147,12 @@ if (!defined('ABSPATH')) {
 
     <?php
         // TODO: Mover este JS a un archivo admin.js y localizar los datos y nonces necesarios.
-        // Por ahora, lo dejo aquí para ilustrar la funcionalidad esperada.
     ?>
     <script type="text/javascript">
         jQuery(document).ready(function($) {
-            var wcFieldsCache = {}; // Cache para campos de WC
-            var zohoFieldsCache = {}; // Cache para campos de Zoho
-            var currentMappings = []; // Mapeos cargados
+            var wcFieldsCache = {};
+            var zohoFieldsCache = {};
+            var currentMappings = [];
 
             var zohoModulesByService = {
                 crm: [
@@ -155,36 +169,41 @@ if (!defined('ABSPATH')) {
                 ],
                 books: [
                     { value: 'Invoices', text: '<?php echo esc_js(__('Invoices', 'woocommerce-zoho-integration')); ?>' },
-                    // { value: 'Estimates', text: '<?php echo esc_js(__('Estimates', 'woocommerce-zoho-integration')); ?>' },
                     { value: 'Customers', text: '<?php echo esc_js(__('Customers (Books)', 'woocommerce-zoho-integration')); ?>' },
                     { value: 'Items', text: '<?php echo esc_js(__('Items (Books)', 'woocommerce-zoho-integration')); ?>' }
                 ]
             };
 
+            function updateLoadButtonState() {
+                if ($('#wzi_wc_module_select').val() && $('#wzi_zoho_module_select').val() && $('#wzi_zoho_service_select').val()) {
+                    $('#wzi_load_mapping_button').prop('disabled', false);
+                } else {
+                    $('#wzi_load_mapping_button').prop('disabled', true);
+                }
+            }
+
             $('#wzi_zoho_service_select').on('change', function() {
                 var service = $(this).val();
                 var $zohoModuleSelect = $('#wzi_zoho_module_select');
+                var currentZohoModuleVal = $zohoModuleSelect.val(); // Guardar valor actual si existe
                 $zohoModuleSelect.html('<option value=""><?php esc_html_e('-- Seleccionar Módulo Zoho --', 'woocommerce-zoho-integration'); ?></option>');
 
                 if (service && zohoModulesByService[service]) {
                     zohoModulesByService[service].forEach(function(module) {
                         $zohoModuleSelect.append($('<option>', { value: module.value, text: module.text }));
                     });
+                    $zohoModuleSelect.val(currentZohoModuleVal); // Intentar restaurar valor
                     $zohoModuleSelect.prop('disabled', false);
                 } else {
                     $zohoModuleSelect.prop('disabled', true);
                 }
-                $('#wzi_load_mapping_button').prop('disabled', true);
+                updateLoadButtonState();
                 $('#wzi-mapping-table-render-area, .wzi-save-mapping-controls').hide();
                 $('.wzi-no-mapping-loaded').show();
             }).trigger('change');
 
             $('#wzi_wc_module_select, #wzi_zoho_module_select').on('change', function() {
-                if ($('#wzi_wc_module_select').val() && $('#wzi_zoho_module_select').val()) {
-                    $('#wzi_load_mapping_button').prop('disabled', false);
-                } else {
-                    $('#wzi_load_mapping_button').prop('disabled', true);
-                }
+                updateLoadButtonState();
                  $('#wzi-mapping-table-render-area, .wzi-save-mapping-controls').hide();
                  $('.wzi-no-mapping-loaded').show();
             });
@@ -194,134 +213,90 @@ if (!defined('ABSPATH')) {
                 var zohoService = $('#wzi_zoho_service_select').val();
                 var zohoModule = $('#wzi_zoho_module_select').val();
                 var $button = $(this);
-                var $spinner = $button.siblings('.spinner'); // Asumiendo que hay un spinner cerca
+                var $spinner = $button.find('.spinner');
                 var $container = $('#wzi_field_mapping_table_container');
                 var $feedback = $('#wzi-mapping-feedback');
 
-                if (!wcModule || !zohoModule || !zohoService) {
-                    alert('<?php echo esc_js(__("Por favor, seleccione todos los módulos.", "woocommerce-zoho-integration")); ?>');
-                    return;
-                }
-
                 $button.prop('disabled', true);
-                if($spinner.length) $spinner.addClass('is-active');
-                $container.html('<p><i><?php echo esc_js(__("Cargando campos y mapeos...", "woocommerce-zoho-integration")); ?></i></p>');
-                $feedback.html('').removeClass('error success notice notice-error notice-success');
+                $spinner.addClass('is-active');
+                $('.wzi-no-mapping-loaded').hide();
+                $('#wzi-mapping-table-render-area').hide();
+                $container.find('.notice').remove(); // Limpiar errores previos en el contenedor
+                $container.append('<p class="wzi-loading-fields"><i><?php echo esc_js(__("Cargando campos y mapeos...", "woocommerce-zoho-integration")); ?></i></p>');
+                $feedback.html('').removeClass('error success notice notice-error notice-success is-dismissible');
 
-                // 1. Cargar campos de WC (simulado, debería ser AJAX o localizado)
-                // 2. Cargar campos de Zoho (AJAX a una acción que llame a get_available_fields_for_module)
-                // 3. Cargar mapeos existentes (AJAX)
-                // Por ahora, simulación y placeholder:
+                // Simulación de llamadas AJAX
+                var ajaxWcFields = $.ajax({
+                    url: wzi_admin.ajax_url,
+                    type: 'POST',
+                    data: { action: 'wzi_get_wc_module_fields', nonce: wzi_admin.nonce, wc_module: wcModule }
+                });
+                var ajaxZohoFields = $.ajax({
+                    url: wzi_admin.ajax_url,
+                    type: 'POST',
+                    data: { action: 'wzi_get_zoho_module_fields', nonce: wzi_admin.nonce, zoho_service: zohoService, zoho_module: zohoModule }
+                });
+                var ajaxLoadMappings = $.ajax({
+                    url: wzi_admin.ajax_url,
+                    type: 'POST',
+                    data: { action: 'wzi_load_field_mappings', nonce: wzi_admin.nonce, wc_module: wcModule, zoho_service: zohoService, zoho_module: zohoModule }
+                });
 
-                // Simular carga de campos y mapeos
-                $.when(
-                    loadWcFields(wcModule), // Debería ser una llamada AJAX
-                    loadZohoFields(zohoService, zohoModule) // Debería ser una llamada AJAX
-                ).done(function(wcFieldsResult, zohoFieldsResult) {
-                    var wcFields = wcFieldsCache[wcModule]; // wcFieldsResult[0] si AJAX
-                    var zohoFields = zohoFieldsCache[zohoService + '_' + zohoModule]; // zohoFieldsResult[0] si AJAX
+                $.when(ajaxWcFields, ajaxZohoFields, ajaxLoadMappings).done(function(wcRes, zohoRes, mappingsRes) {
+                    var wcFields = (wcRes[0].success && wcRes[0].data) ? wcRes[0].data : null;
+                    var zohoFields = (zohoRes[0].success && zohoRes[0].data) ? zohoRes[0].data : null;
+                    currentMappings = (mappingsRes[0].success && mappingsRes[0].data) ? mappingsRes[0].data : [];
 
-                    if (!wcFields || !zohoFields) {
-                         $container.html('<p class="notice notice-error"><?php echo esc_js(__("Error al cargar la estructura de campos.", "woocommerce-zoho-integration")); ?></p>');
-                         return;
+                    wcFieldsCache[wcModule] = wcFields; // Cachear
+                    zohoFieldsCache[zohoService + '_' + zohoModule] = zohoFields; // Cachear
+
+                    if (!wcFields || wcFields.length === 0) {
+                         $container.append('<p class="notice notice-warning"><?php echo esc_js(__("No se pudieron cargar los campos de WooCommerce o no hay campos definidos.", "woocommerce-zoho-integration")); ?></p>');
+                    }
+                    if (!zohoFields || zohoFields.length === 0) {
+                         $container.append('<p class="notice notice-warning"><?php echo esc_js(__("No se pudieron cargar los campos de Zoho o no hay campos definidos.", "woocommerce-zoho-integration")); ?></p>');
                     }
 
-                    // TODO: Cargar mapeos existentes para wcModule y zohoModule vía AJAX
-                    // Por ahora, currentMappings será un array vacío o con datos de ejemplo.
-                    currentMappings = [ /* { wc_field: 'billing_email', zoho_field: 'Email', direction: 'both' }, ... */ ];
+                    if (wcFields && zohoFields && wcFields.length > 0 && zohoFields.length > 0) {
+                        renderMappingTable(wcFields, zohoFields, currentMappings);
+                        $('#wzi-mapping-table-render-area, .wzi-save-mapping-controls').show();
+                    } else {
+                        $('.wzi-no-mapping-loaded').show();
+                         $('#wzi-mapping-table-render-area, .wzi-save-mapping-controls').hide();
+                    }
 
-                    renderMappingTable(wcFields, zohoFields, currentMappings);
-                    $('#wzi-mapping-table-render-area, .wzi-save-mapping-controls').show();
-                    $('.wzi-no-mapping-loaded').hide();
-
-                }).fail(function() {
-                    $container.html('<p class="notice notice-error"><?php echo esc_js(__("Error al cargar la estructura de campos.", "woocommerce-zoho-integration")); ?></p>');
+                }).fail(function(jqXHR, textStatus, errorThrown) {
+                    var errorDetail = jqXHR.responseJSON && jqXHR.responseJSON.data && jqXHR.responseJSON.data.message ? jqXHR.responseJSON.data.message : errorThrown;
+                    $container.append('<p class="notice notice-error"><?php echo esc_js(__("Error AJAX al cargar la estructura de campos: ", "woocommerce-zoho-integration")); ?>' + errorDetail + '</p>');
+                     $('.wzi-no-mapping-loaded').show();
                 }).always(function() {
                     $button.prop('disabled', false);
-                    if($spinner.length) $spinner.removeClass('is-active');
+                    $spinner.removeClass('is-active');
+                    $container.find('.wzi-loading-fields').remove();
                 });
             });
 
-            // Funciones de simulación (reemplazar con AJAX real)
-            function loadWcFields(module) {
-                var dfd = $.Deferred();
-                if (wcFieldsCache[module]) {
-                    return dfd.resolve(wcFieldsCache[module]).promise();
-                }
-                // Simulación, estos campos deberían venir de una llamada AJAX o datos localizados
-                var fields = [];
-                if (module === 'customer') {
-                    fields = [
-                        { id: 'user_email', name: '<?php echo esc_js(__("Email de Usuario", "woocommerce-zoho-integration")); ?>', type: 'email' },
-                        { id: 'first_name', name: '<?php echo esc_js(__("Nombre", "woocommerce-zoho-integration")); ?>', type: 'string' },
-                        { id: 'last_name', name: '<?php echo esc_js(__("Apellido", "woocommerce-zoho-integration")); ?>', type: 'string' },
-                        { id: 'billing_phone', name: '<?php echo esc_js(__("Teléfono de Facturación", "woocommerce-zoho-integration")); ?>', type: 'phone' }
-                    ];
-                } else if (module === 'product') {
-                     fields = [
-                        { id: 'name', name: '<?php echo esc_js(__("Nombre del Producto", "woocommerce-zoho-integration")); ?>', type: 'string' },
-                        { id: 'sku', name: '<?php echo esc_js(__("SKU", "woocommerce-zoho-integration")); ?>', type: 'string' },
-                        { id: 'regular_price', name: '<?php echo esc_js(__("Precio Regular", "woocommerce-zoho-integration")); ?>', type: 'decimal' }
-                    ];
-                } else if (module === 'order') {
-                     fields = [
-                        { id: 'order_number', name: '<?php echo esc_js(__("Número de Pedido", "woocommerce-zoho-integration")); ?>', type: 'string' },
-                        { id: 'total', name: '<?php echo esc_js(__("Total del Pedido", "woocommerce-zoho-integration")); ?>', type: 'decimal' },
-                        { id: 'status', name: '<?php echo esc_js(__("Estado del Pedido", "woocommerce-zoho-integration")); ?>', type: 'string' }
-                    ];
-                }
-                wcFieldsCache[module] = fields;
-                dfd.resolve(fields);
-                return dfd.promise();
-            }
-
-            function loadZohoFields(service, module) {
-                 var dfd = $.Deferred();
-                 var cacheKey = service + '_' + module;
-                 if (zohoFieldsCache[cacheKey]) {
-                    return dfd.resolve(zohoFieldsCache[cacheKey]).promise();
-                 }
-                // Esto debería ser una llamada AJAX a una acción que use WZI_Zoho_CRM::get_available_fields_for_module() etc.
-                // Ejemplo: action: 'wzi_get_zoho_module_fields', service: service, module: module
-                // Por ahora, simulación:
-                var fields = [];
-                 if (service === 'crm' && module === 'Contacts') {
-                    fields = [
-                        { api_name: 'Email', field_label: '<?php echo esc_js(__("Email", "woocommerce-zoho-integration")); ?>', data_type: 'email'},
-                        { api_name: 'First_Name', field_label: '<?php echo esc_js(__("First Name", "woocommerce-zoho-integration")); ?>', data_type: 'string'},
-                        { api_name: 'Last_Name', field_label: '<?php echo esc_js(__("Last Name", "woocommerce-zoho-integration")); ?>', data_type: 'string'},
-                        { api_name: 'Phone', field_label: '<?php echo esc_js(__("Phone", "woocommerce-zoho-integration")); ?>', data_type: 'phone'}
-                    ];
-                 } else if (service === 'inventory' && module === 'Items') {
-                     fields = [
-                        { api_name: 'name', field_label: '<?php echo esc_js(__("Item Name", "woocommerce-zoho-integration")); ?>', data_type: 'string'},
-                        { api_name: 'sku', field_label: '<?php echo esc_js(__("SKU", "woocommerce-zoho-integration")); ?>', data_type: 'string'},
-                        { api_name: 'rate', field_label: '<?php echo esc_js(__("Rate", "woocommerce-zoho-integration")); ?>', data_type: 'decimal'}
-                    ];
-                 }
-                 zohoFieldsCache[cacheKey] = fields;
-                 dfd.resolve(fields);
-                 return dfd.promise();
-            }
-
-            // Renderizar tabla de mapeo
             var rowTemplate = _.template($('#wzi-mapping-row-template').html());
             function renderMappingTable(wcFields, zohoFields, mappings) {
                 var $tbody = $('#wzi-field-mapping-rows');
                 $tbody.empty();
-                if (mappings.length === 0) { // Añadir una fila vacía si no hay mapeos
-                    mappings.push({ wc_field: '', zoho_field: '', direction: 'wc_to_zoho' });
-                }
-                mappings.forEach(function(mapping, index) {
-                    var rowHtml = rowTemplate({ index: index, wcFields: wcFields, zohoFields: zohoFields });
+
+                var effectiveMappings = mappings.length > 0 ? mappings : [{ wc_field: '', wc_custom_meta: '', zoho_field: '', direction: 'wc_to_zoho' }];
+
+                effectiveMappings.forEach(function(mapping, index) {
+                    var rowHtml = rowTemplate({
+                        index: index,
+                        wcFields: wcFields,
+                        zohoFields: zohoFields,
+                        wc_field: mapping.wc_field,
+                        wc_custom_meta: mapping.wc_custom_meta,
+                        zoho_field: mapping.zoho_field,
+                        direction: mapping.direction
+                    });
                     var $row = $(rowHtml);
-                    $row.find('select[name="mappings['+index+'][wc_field]"]').val(mapping.wc_field);
-                    $row.find('select[name="mappings['+index+'][zoho_field]"]').val(mapping.zoho_field);
-                    $row.find('select[name="mappings['+index+'][direction]"]').val(mapping.direction);
-                    if (mapping.wc_field === '_custom_meta_') {
-                        $row.find('.wzi-wc-custom-meta-field').show().val(mapping.wc_custom_meta || '');
-                    }
                     $tbody.append($row);
+                    // Trigger change para que se muestre/oculte el campo de meta personalizado si es necesario
+                    $row.find('.wzi-wc-field-select').trigger('change');
                 });
             }
 
@@ -329,17 +304,21 @@ if (!defined('ABSPATH')) {
                 var wcModule = $('#wzi_wc_module_select').val();
                 var zohoService = $('#wzi_zoho_service_select').val();
                 var zohoModule = $('#wzi_zoho_module_select').val();
-                if (!wcFieldsCache[wcModule] || !zohoFieldsCache[zohoService + '_' + zohoModule]) {
+
+                var wcFields = wcFieldsCache[wcModule];
+                var zohoFields = zohoFieldsCache[zohoService + '_' + zohoModule];
+
+                if (!wcFields || !zohoFields) {
                     alert('<?php echo esc_js(__("Por favor, cargue los campos primero.", "woocommerce-zoho-integration")); ?>');
                     return;
                 }
                 var newIndex = $('#wzi-field-mapping-rows tr').length;
-                var rowHtml = rowTemplate({ index: newIndex, wcFields: wcFieldsCache[wcModule], zohoFields: zohoFieldsCache[zohoService + '_' + zohoModule] });
+                var rowHtml = rowTemplate({ index: newIndex, wcFields: wcFields, zohoFields: zohoFields, wc_field: '', wc_custom_meta: '', zoho_field: '', direction: 'wc_to_zoho' });
                 $('#wzi-field-mapping-rows').append(rowHtml);
             });
 
             $('#wzi_field_mapping_table_container').on('click', '.wzi-remove-mapping-row', function() {
-                $(this).closest('tr').remove();
+                $(this).closest('tr.wzi-mapping-row').remove();
             });
 
             $('#wzi_field_mapping_table_container').on('change', '.wzi-wc-field-select', function() {
@@ -354,33 +333,44 @@ if (!defined('ABSPATH')) {
 
             $('#wzi_save_mapping_button').on('click', function() {
                 var $button = $(this);
-                var $spinner = $button.siblings('.spinner'); // Asumiendo spinner junto al botón
+                var $spinner = $button.find('.spinner');
                 var $feedback = $('#wzi-mapping-feedback');
 
                 var mappingsData = [];
                 $('#wzi-field-mapping-rows tr').each(function(index) {
                     var $row = $(this);
-                    var wcField = $row.find('select[name="mappings['+index+'][wc_field]"]').val();
+                    var wcField = $row.find('.wzi-wc-field-select').val();
                     var wcCustomMeta = '';
                     if (wcField === '_custom_meta_') {
-                        wcCustomMeta = $row.find('input[name="mappings['+index+'][wc_custom_meta]"]').val();
+                        wcCustomMeta = $row.find('.wzi-wc-custom-meta-field').val();
                         if(!wcCustomMeta) {
-                            // Podrías añadir una validación o alerta aquí
-                            // Por ahora, se permite si el usuario quiere mapear un meta vacío (aunque no tenga sentido)
+                            // Considerar validación: si es _custom_meta_ pero el input está vacío
+                            // $feedback.html('<p class="notice notice-error"><?php echo esc_js(__("Por favor, especifique el nombre del Meta Key para los campos personalizados.", "woocommerce-zoho-integration")); ?></p>').addClass('is-dismissible');
+                            // return false; // Detener el guardado
                         }
                     }
+                    var zohoField = $row.find('.wzi-zoho-field-select').val();
+                    if (!wcField || !zohoField) { // No guardar filas incompletas (a menos que se permita explícitamente)
+                        return true; // Continuar al siguiente .each()
+                    }
+
                     mappingsData.push({
                         wc_field: wcField,
                         wc_custom_meta: wcCustomMeta,
-                        zoho_field: $row.find('select[name="mappings['+index+'][zoho_field]"]').val(),
-                        direction: $row.find('select[name="mappings['+index+'][direction]"]').val()
-                        // transform_function: $row.find('input[name="mappings['+index+'][transform_function]"]').val() // Si añades este campo
+                        zoho_field: zohoField,
+                        direction: $row.find('select[name*="[direction]"]').val()
                     });
                 });
 
+                if (mappingsData.length === 0) {
+                    if (!confirm('<?php echo esc_js(__("No hay mapeos definidos. ¿Desea guardar una configuración de mapeo vacía para estos módulos (esto eliminará los mapeos existentes)?", "woocommerce-zoho-integration")); ?>')) {
+                        return;
+                    }
+                }
+
                 $button.prop('disabled', true);
-                if($spinner.length) $spinner.addClass('is-active');
-                $feedback.html('').removeClass('error success notice notice-error notice-success');
+                $spinner.addClass('is-active');
+                $feedback.html('').removeClass('error success notice notice-error notice-success is-dismissible');
 
                 $.ajax({
                     url: wzi_admin.ajax_url,
@@ -405,12 +395,12 @@ if (!defined('ABSPATH')) {
                         $feedback.html('<p><?php echo esc_js(__("Error AJAX al guardar el mapeo: ", "woocommerce-zoho-integration")); ?>' + textStatus + ' - ' + errorThrown + '</p>').addClass('notice notice-error is-dismissible');
                     },
                     complete: function() {
-                        if($spinner.length) $spinner.removeClass('is-active');
+                        $spinner.removeClass('is-active');
                         $button.prop('disabled', false);
                     }
                 });
             });
-             // Inicializar Underscore.js para plantillas si no está ya configurado
+
             if (typeof _ === 'undefined' && typeof wp !== 'undefined' && wp.template) {
                  _ = { template: wp.template };
             } else if (typeof _ === 'undefined') {
