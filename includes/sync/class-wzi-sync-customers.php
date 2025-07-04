@@ -625,7 +625,36 @@ class WZI_Sync_Customers {
             return $value !== null;
         });
 
-        $this->logger->debug(sprintf('Final Zoho data payload for WC User ID: %d', $customer_id), $zoho_data);
+        $this->logger->debug(sprintf('Zoho data payload for WC User ID: %d before validation and final filter', $customer_id), $zoho_data);
+
+        // Validar los datos preparados antes de enviarlos a Zoho
+        $validation_result = WZI_Validator::validate_for_zoho($zoho_data, 'Contacts'); // Asumiendo 'Contacts' como tipo de entidad para el validador
+
+        if (!$validation_result['valid']) {
+            $this->logger->error(
+                sprintf('Validation failed for Zoho Contact data (WC User ID: %d).', $customer_id),
+                array(
+                    'errors' => $validation_result['errors'],
+                    'data_prepared' => $zoho_data
+                )
+            );
+            // Devolver un WP_Error con los detalles de la validación
+            // Es importante que el código de error sea único y descriptivo
+            $error_messages = implode('; ', array_map(function($field_errors) {
+                return implode(', ', (array)$field_errors);
+            }, $validation_result['errors']));
+            return new WP_Error(
+                'zoho_contact_validation_failed',
+                sprintf(__('Los datos preparados para el contacto de Zoho no pasaron la validación: %s', 'woocommerce-zoho-integration'), $error_messages),
+                $validation_result['errors']
+            );
+        }
+
+        // Usar los datos potencialmente sanitizados/modificados por el validador
+        // Aunque WZI_Validator actualmente no modifica mucho, es una buena práctica.
+        $zoho_data = $validation_result['data'];
+
+        $this->logger->debug(sprintf('Final Zoho data payload for WC User ID: %d after validation', $customer_id), $zoho_data);
 
         $zoho_id = get_user_meta($customer_id, $this->zoho_id_meta_key, true);
         $search_field_for_upsert = 'Email'; // Campo principal para buscar duplicados
@@ -643,7 +672,7 @@ class WZI_Sync_Customers {
             $this->logger->info(sprintf('Attempting to upsert Zoho Contact for WC User ID: %d (Email: %s)', $customer_id, $email_value));
             $response = $this->crm_api->upsert_record('Contacts', $zoho_data, $upsert_criteria);
         }
-        
+
         if (is_wp_error($response)) {
             $this->logger->error(
                 sprintf('Error syncing WC User ID: %d to Zoho. Zoho ID: %s', $customer_id, $zoho_id ?: 'N/A (attempted upsert)'),
@@ -651,7 +680,7 @@ class WZI_Sync_Customers {
             );
             return $response;
         }
-        
+
         // La respuesta de create/update/upsert en Zoho CRM v2+ suele estar en $response['data'][0]
         // y el ID del registro en $response['data'][0]['details']['id']
         $processed_record = null;

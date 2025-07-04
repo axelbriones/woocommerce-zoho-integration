@@ -61,22 +61,25 @@ if (!defined('ABSPATH')) {
                     </td>
                 </tr>
             </table>
-            <button type="button" id="wzi_load_mapping_button" class="button button-secondary" disabled><?php esc_html_e('Cargar Campos para Mapeo', 'woocommerce-zoho-integration'); ?></button>
+            <button type="button" id="wzi_load_mapping_button" class="button button-secondary" disabled>
+                <?php esc_html_e('Cargar Campos para Mapeo', 'woocommerce-zoho-integration'); ?>
+                <span class="spinner" style="float: none; vertical-align: middle; margin-left: 5px;"></span>
+            </button>
         </div>
 
         <hr/>
 
         <div id="wzi_field_mapping_table_container">
-            <p class="description wzi-no-mapping-loaded"><?php esc_html_e('Seleccione los módulos de WooCommerce y Zoho para ver y configurar el mapeo de campos.', 'woocommerce-zoho-integration'); ?></p>
+            <p class="description wzi-no-mapping-loaded"><?php esc_html_e('Seleccione los módulos de WooCommerce y Zoho y luego haga clic en "Cargar Campos para Mapeo" para configurar las asignaciones de campos.', 'woocommerce-zoho-integration'); ?></p>
 
             <div id="wzi-mapping-table-render-area" style="display:none;">
                 <table class="wp-list-table widefat fixed striped wzi-mapping-table">
                     <thead>
                         <tr>
-                            <th style="width: 30%;"><?php esc_html_e('Campo WooCommerce', 'woocommerce-zoho-integration'); ?></th>
-                            <th style="width: 30%;"><?php esc_html_e('Campo Zoho', 'woocommerce-zoho-integration'); ?></th>
+                            <th style="width: 35%;"><?php esc_html_e('Campo WooCommerce', 'woocommerce-zoho-integration'); ?></th>
+                            <th style="width: 35%;"><?php esc_html_e('Campo Zoho', 'woocommerce-zoho-integration'); ?></th>
                             <th style="width: 20%;"><?php esc_html_e('Dirección Sinc.', 'woocommerce-zoho-integration'); ?></th>
-                            <th><?php esc_html_e('Acciones', 'woocommerce-zoho-integration'); ?></th>
+                            <th style="width: 10%;"><?php esc_html_e('Acciones', 'woocommerce-zoho-integration'); ?></th>
                         </tr>
                     </thead>
                     <tbody id="wzi-field-mapping-rows">
@@ -90,41 +93,53 @@ if (!defined('ABSPATH')) {
         <div id="wzi-mapping-feedback" style="margin-top: 20px;"></div>
 
         <p class="submit wzi-save-mapping-controls" style="display:none;">
-            <button type="button" id="wzi_save_mapping_button" class="button button-primary"><?php esc_html_e('Guardar Mapeos para este Módulo', 'woocommerce-zoho-integration'); ?></button>
-            <span class="spinner"></span>
+            <button type="button" id="wzi_save_mapping_button" class="button button-primary">
+                <?php esc_html_e('Guardar Mapeos para este Módulo', 'woocommerce-zoho-integration'); ?>
+                <span class="spinner" style="float: none; vertical-align: middle; margin-left: 5px;"></span>
+            </button>
         </p>
     </div>
 
     <script type="text/template" id="wzi-mapping-row-template">
-        <tr>
+        <tr class="wzi-mapping-row">
             <td>
                 <select class="wzi-wc-field-select" name="mappings[<%= index %>][wc_field]">
-                    <option value=""><?php echo esc_js(__('Seleccionar campo WC', 'woocommerce-zoho-integration')); ?></option>
-                    <% wcFields.forEach(function(field) { %>
-                        <option value="<%= field.id %>" data-type="<%= field.type %>"><%= field.name %></option>
+                    <option value=""><?php echo esc_js(__('Seleccionar campo WooCommerce', 'woocommerce-zoho-integration')); ?></option>
+                    <% wcFields.forEach(function(group) { %>
+                        <optgroup label="<%= group.group_name %>">
+                            <% group.fields.forEach(function(field) { %>
+                                <option value="<%= field.id %>" data-type="<%= field.type %>" <%= (typeof wc_field !== 'undefined' && wc_field === field.id) ? 'selected' : '' %>>
+                                    <%= field.name %>
+                                </option>
+                            <% }); %>
+                        </optgroup>
                     <% }); %>
-                    <option value="_custom_meta_"><?php echo esc_js(__('Campo Meta Personalizado', 'woocommerce-zoho-integration')); ?></option>
+                    <option value="_custom_meta_" <%= (typeof wc_field !== 'undefined' && wc_field === '_custom_meta_') ? 'selected' : '' %>>
+                        <?php echo esc_js(__('Campo Meta Personalizado', 'woocommerce-zoho-integration')); ?>
+                    </option>
                 </select>
-                <input type="text" class="wzi-wc-custom-meta-field" name="mappings[<%= index %>][wc_custom_meta]" placeholder="<?php echo esc_js(__('Nombre del Meta Key', 'woocommerce-zoho-integration')); ?>" style="display:none; margin-top:5px;" />
+                <input type="text" class="wzi-wc-custom-meta-field regular-text" name="mappings[<%= index %>][wc_custom_meta]" value="<%= typeof wc_custom_meta !== 'undefined' ? wc_custom_meta : '' %>" placeholder="<?php echo esc_js(__('Nombre del Meta Key', 'woocommerce-zoho-integration')); ?>" style="display:<%= (typeof wc_field !== 'undefined' && wc_field === '_custom_meta_') ? 'block' : 'none' %>; margin-top:5px;" />
             </td>
             <td>
                 <select class="wzi-zoho-field-select" name="mappings[<%= index %>][zoho_field]">
                     <option value=""><?php echo esc_js(__('Seleccionar campo Zoho', 'woocommerce-zoho-integration')); ?></option>
                     <% zohoFields.forEach(function(field) { %>
-                        <option value="<%= field.api_name %>" data-type="<%= field.data_type %>"><%= field.field_label %> (<%= field.api_name %>)</option>
+                        <option value="<%= field.api_name %>" data-type="<%= field.data_type %>" <%= (typeof zoho_field !== 'undefined' && zoho_field === field.api_name) ? 'selected' : '' %>>
+                            <%= field.field_label %> (<%= field.api_name %>)
+                        </option>
                     <% }); %>
                 </select>
             </td>
             <td>
                 <select name="mappings[<%= index %>][direction]">
-                    <option value="wc_to_zoho"><?php echo esc_js(__('WC → Zoho', 'woocommerce-zoho-integration')); ?></option>
-                    <option value="zoho_to_wc"><?php echo esc_js(__('Zoho → WC', 'woocommerce-zoho-integration')); ?></option>
-                    <option value="both"><?php echo esc_js(__('Ambos (Bidireccional)', 'woocommerce-zoho-integration')); ?></option>
+                    <option value="wc_to_zoho" <%= (typeof direction !== 'undefined' && direction === 'wc_to_zoho') ? 'selected' : '' %>><?php echo esc_js(__('WC → Zoho', 'woocommerce-zoho-integration')); ?></option>
+                    <option value="zoho_to_wc" <%= (typeof direction !== 'undefined' && direction === 'zoho_to_wc') ? 'selected' : '' %>><?php echo esc_js(__('Zoho → WC', 'woocommerce-zoho-integration')); ?></option>
+                    <option value="both" <%= (typeof direction !== 'undefined' && direction === 'both') ? 'selected' : '' %>><?php echo esc_js(__('Ambos (Bidireccional)', 'woocommerce-zoho-integration')); ?></option>
                 </select>
             </td>
             <td>
-                <button type="button" class="button wzi-remove-mapping-row">
-                    <span class="dashicons dashicons-trash"></span> <?php echo esc_js(__('Quitar', 'woocommerce-zoho-integration')); ?>
+                <button type="button" class="button button-link-delete wzi-remove-mapping-row" title="<?php echo esc_attr__('Quitar este mapeo', 'woocommerce-zoho-integration'); ?>">
+                    <span class="dashicons dashicons-no-alt"></span>
                 </button>
             </td>
         </tr>
@@ -132,4 +147,5 @@ if (!defined('ABSPATH')) {
 
     <?php
     ?>
+
 </div>

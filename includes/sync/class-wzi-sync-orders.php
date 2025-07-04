@@ -59,7 +59,7 @@ class WZI_Sync_Orders {
             $this->customer_sync = new WZI_Sync_Customers();
         } else {
             if(isset($this->logger)) $this->logger->error('WZI_Sync_Customers class not found during WZI_Sync_Orders instantiation.');
-            $this->customer_sync = null; 
+            $this->customer_sync = null;
         }
         // No inicializamos Inventory y Books API aquí a menos que sean siempre necesarias.
         // Se pueden instanciar bajo demanda en los métodos que las usen.
@@ -74,8 +74,8 @@ class WZI_Sync_Orders {
      */
     private function load_field_mapping() {
         global $wpdb;
-        $this->field_mapping = array(); 
-        
+        $this->field_mapping = array();
+
         $mapping_table = $wpdb->prefix . 'wzi_field_mapping';
         
         $mappings = $wpdb->get_results($wpdb->prepare(
@@ -112,7 +112,7 @@ class WZI_Sync_Orders {
             'order_number' => array( // WC_Order->get_order_number()
                 'zoho_field' => 'Deal_Name', // Para Deals. Para Sales_Orders sería 'Subject'.
                 'sync_direction' => 'wc_to_zoho',
-                'transform_function' => null, 
+                'transform_function' => null,
             ),
             'total' => array( // WC_Order->get_total()
                 'zoho_field' => 'Amount', // Para Deals. Para Sales_Orders sería 'Grand_Total'.
@@ -185,12 +185,12 @@ class WZI_Sync_Orders {
             'on-hold'    => 'On Hold',
             'completed'  => 'Delivered', // O 'Fulfilled'
             'cancelled'  => 'Cancelled',
-            'refunded'   => 'Cancelled', 
+            'refunded'   => 'Cancelled',
             'failed'     => 'Cancelled',
         );
         return $mapping[$status] ?? 'Created'; // Fallback
     }
-    
+  
     /**
      * Helper para formatear fecha para campos de fecha de Zoho CRM (YYYY-MM-DD).
      *

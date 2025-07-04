@@ -73,8 +73,9 @@ class WZI_Settings {
         $this->options['general'] = get_option('wzi_general_settings', array());
         $this->options['api'] = get_option('wzi_api_settings', array());
         $this->options['sync'] = get_option('wzi_sync_settings', array());
-        $this->options['mapping'] = get_option('wzi_field_mapping', array());
+        $this->options['mapping'] = get_option('wzi_field_mapping', array()); // Nota: Esto podría no ser un 'option' simple si el mapeo es complejo y se guarda en tabla propia.
         $this->options['webhook'] = get_option('wzi_webhook_settings', array());
+        $this->options['advanced'] = get_option('wzi_advanced_settings', array()); // Nueva opción
     }
 
     /**
@@ -94,6 +95,9 @@ class WZI_Settings {
         
         // Registrar configuraciones de webhook
         $this->register_webhook_settings();
+
+        // Registrar configuraciones avanzadas
+        $this->register_advanced_settings();
     }
 
     /**
@@ -697,5 +701,166 @@ class WZI_Settings {
         
         $option_name = 'wzi_' . $group . '_settings';
         return update_option($option_name, $this->options[$group]);
+    }
+
+    /**
+     * Registrar configuraciones avanzadas.
+     *
+     * @since    1.0.0
+     * @access   private
+     */
+    private function register_advanced_settings() {
+        register_setting(
+            'wzi_advanced_settings_group', // Nuevo grupo
+            'wzi_advanced_settings',       // Nueva opción donde se guardará un array
+            array(
+                'sanitize_callback' => array($this, 'sanitize_advanced_settings'),
+                'default' => array(
+                    'delete_data_on_uninstall' => 'no', // Cambiado de delete_log_on_uninstall
+                    'api_request_timeout' => 30,
+                    'max_queue_items_per_cron' => 50,
+                    'enable_detailed_api_logging' => 'no',
+                ),
+            )
+        );
+
+        add_settings_section(
+            'wzi_advanced_section',
+            __('Configuración Avanzada', 'woocommerce-zoho-integration'),
+            array($this, 'advanced_section_callback'),
+            'wzi_advanced_settings' // Página de opciones donde se mostrará esta sección
+        );
+
+        add_settings_field(
+            'delete_data_on_uninstall',
+            __('Eliminar Datos al Desinstalar', 'woocommerce-zoho-integration'),
+            array($this, 'delete_data_on_uninstall_callback'), // Nuevo callback
+            'wzi_advanced_settings',
+            'wzi_advanced_section'
+        );
+
+        add_settings_field(
+            'api_request_timeout',
+            __('Timeout Solicitudes API (segundos)', 'woocommerce-zoho-integration'),
+            array($this, 'api_request_timeout_callback'), // Nuevo callback
+            'wzi_advanced_settings',
+            'wzi_advanced_section'
+        );
+
+        add_settings_field(
+            'max_queue_items_per_cron',
+            __('Máx. Items de Cola por Cron', 'woocommerce-zoho-integration'),
+            array($this, 'max_queue_items_per_cron_callback'), // Nuevo callback
+            'wzi_advanced_settings',
+            'wzi_advanced_section'
+        );
+
+        add_settings_field(
+            'enable_detailed_api_logging',
+            __('Habilitar Logging Detallado de API', 'woocommerce-zoho-integration'),
+            array($this, 'enable_detailed_api_logging_callback'), // Nuevo callback
+            'wzi_advanced_settings',
+            'wzi_advanced_section'
+        );
+    }
+
+    /**
+     * Callback para la sección de configuración avanzada.
+     *
+     * @since 1.0.0
+     */
+    public function advanced_section_callback() {
+        echo '<p>' . __('Ajustes avanzados para el plugin. Modificar con precaución.', 'woocommerce-zoho-integration') . '</p>';
+    }
+
+    // Los callbacks de campo (delete_data_on_uninstall_callback, etc.) y sanitize_advanced_settings se añadirán en el siguiente paso.
+
+    /** Callbacks para campos de Configuración Avanzada */
+
+    public function delete_data_on_uninstall_callback() {
+        $options = $this->options['advanced'] ?? array();
+        $value = $options['delete_data_on_uninstall'] ?? 'no';
+        ?>
+        <label>
+            <input type="checkbox" name="wzi_advanced_settings[delete_data_on_uninstall]" value="yes" <?php checked($value, 'yes'); ?> />
+            <?php esc_html_e('Si está marcado, todos los datos del plugin (logs, cola, tokens, mapeos, configuraciones) se eliminarán de la base de datos cuando el plugin sea desinstalado.', 'woocommerce-zoho-integration'); ?>
+        </label>
+        <p class="description"><?php esc_html_e('Esta acción no se puede deshacer. Úselo con precaución.', 'woocommerce-zoho-integration'); ?></p>
+        <?php
+    }
+
+    public function api_request_timeout_callback() {
+        $options = $this->options['advanced'] ?? array();
+        $value = $options['api_request_timeout'] ?? 30;
+        ?>
+        <input type="number" name="wzi_advanced_settings[api_request_timeout]" value="<?php echo esc_attr($value); ?>" min="5" max="300" step="1" />
+        <p class="description"><?php esc_html_e('Tiempo máximo en segundos que el plugin esperará una respuesta de la API de Zoho. Recomendado: 15-60. Por defecto: 30.', 'woocommerce-zoho-integration'); ?></p>
+        <?php
+    }
+
+    public function max_queue_items_per_cron_callback() {
+        $options = $this->options['advanced'] ?? array();
+        $value = $options['max_queue_items_per_cron'] ?? 50;
+        ?>
+        <input type="number" name="wzi_advanced_settings[max_queue_items_per_cron]" value="<?php echo esc_attr($value); ?>" min="1" max="500" step="1" />
+        <p class="description"><?php esc_html_e('Número máximo de ítems de la cola de sincronización que se procesarán en cada ejecución del trabajo cron. Por defecto: 50.', 'woocommerce-zoho-integration'); ?></p>
+        <?php
+    }
+
+    public function enable_detailed_api_logging_callback() {
+        $options = $this->options['advanced'] ?? array();
+        $value = $options['enable_detailed_api_logging'] ?? 'no';
+        ?>
+        <label>
+            <input type="checkbox" name="wzi_advanced_settings[enable_detailed_api_logging]" value="yes" <?php checked($value, 'yes'); ?> />
+            <?php esc_html_e('Registrar el cuerpo completo de las solicitudes y respuestas de la API. ADVERTENCIA: Esto puede generar archivos de log muy grandes y podría exponer datos sensibles en los logs.', 'woocommerce-zoho-integration'); ?>
+        </label>
+        <p class="description"><?php esc_html_e('Activar solo para depuración avanzada y bajo su propio riesgo.', 'woocommerce-zoho-integration'); ?></p>
+        <?php
+    }
+
+    /**
+     * Sanitización para configuraciones avanzadas.
+     *
+     * @since 1.0.0
+     * @param array $input Datos de entrada.
+     * @return array Datos sanitizados.
+     */
+    public function sanitize_advanced_settings($input) {
+        $output = array();
+        $defaults = $this->register_advanced_settings_defaults(); // Helper para obtener defaults
+
+        $output['delete_data_on_uninstall'] = (isset($input['delete_data_on_uninstall']) && $input['delete_data_on_uninstall'] === 'yes') ? 'yes' : 'no';
+
+        if (isset($input['api_request_timeout']) && is_numeric($input['api_request_timeout'])) {
+            $output['api_request_timeout'] = max(5, min(300, intval($input['api_request_timeout'])));
+        } else {
+            $output['api_request_timeout'] = $defaults['api_request_timeout'];
+        }
+
+        if (isset($input['max_queue_items_per_cron']) && is_numeric($input['max_queue_items_per_cron'])) {
+            $output['max_queue_items_per_cron'] = max(1, min(500, intval($input['max_queue_items_per_cron'])));
+        } else {
+            $output['max_queue_items_per_cron'] = $defaults['max_queue_items_per_cron'];
+        }
+
+        $output['enable_detailed_api_logging'] = (isset($input['enable_detailed_api_logging']) && $input['enable_detailed_api_logging'] === 'yes') ? 'yes' : 'no';
+
+        return $output;
+    }
+
+    /**
+     * Helper para obtener los valores por defecto de las configuraciones avanzadas.
+     * Usado en la sanitización para asegurar que siempre haya un valor válido.
+     * @since 1.0.0
+     * @return array
+     */
+    private function register_advanced_settings_defaults() {
+        return array(
+            'delete_data_on_uninstall' => 'no',
+            'api_request_timeout' => 30,
+            'max_queue_items_per_cron' => 50,
+            'enable_detailed_api_logging' => 'no',
+        );
     }
 }
