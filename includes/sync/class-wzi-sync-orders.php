@@ -75,13 +75,13 @@ class WZI_Sync_Orders {
     private function load_field_mapping() {
         global $wpdb;
         $this->field_mapping = array();
-        
+
         $mapping_table = $wpdb->prefix . 'wzi_field_mapping';
         
         $mappings = $wpdb->get_results($wpdb->prepare(
-            "SELECT woo_field, zoho_field, sync_direction, transform_function FROM {$mapping_table}
+            "SELECT woo_field, zoho_field, sync_direction, transform_function FROM {$mapping_table} 
              WHERE entity_type = %s AND is_active = 1",
-            'order'
+            'order' 
         ));
         
         foreach ($mappings as $mapping) {
@@ -190,7 +190,7 @@ class WZI_Sync_Orders {
         );
         return $mapping[$status] ?? 'Created'; // Fallback
     }
-
+  
     /**
      * Helper para formatear fecha para campos de fecha de Zoho CRM (YYYY-MM-DD).
      *
