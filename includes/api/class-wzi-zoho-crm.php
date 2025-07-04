@@ -532,36 +532,6 @@ class WZI_Zoho_CRM extends WZI_API_Handler {
     }
 
     /**
-     * Obtener descripción del pedido.
-     *
-     * @since    1.0.0
-     * @access   private
-     * @param    WC_Order $order Pedido de WooCommerce.
-     * @return   string          Descripción formateada del pedido.
-     */
-    private function get_order_description($order) {
-        $items = array();
-
-        foreach ($order->get_items() as $item) {
-            $items[] = sprintf('%s x %d', $item->get_name(), $item->get_quantity());
-        }
-
-        $description = sprintf(
-            __("Pedido #%s\nFecha: %s\nProductos:\n%s\n\nTotal: %s", 'woocommerce-zoho-integration'),
-            $order->get_order_number(),
-            $order->get_date_created()->format('Y-m-d H:i:s'),
-            implode("\n", $items),
-            $order->get_formatted_order_total()
-        );
-
-        if ($order->get_customer_note()) {
-            $description .= "\n\n" . __('Nota del cliente:', 'woocommerce-zoho-integration') . "\n" . $order->get_customer_note();
-        }
-
-        return $description;
-    }
-
-    /**
      * Obtener los campos disponibles para un módulo específico de Zoho CRM.
      *
      * Consulta la API de metadatos de Zoho CRM para obtener los campos y los cachea.
@@ -623,11 +593,12 @@ class WZI_Zoho_CRM extends WZI_API_Handler {
     }
 
     /**
-     * Obtener productos desde CRM.
-     *
+     * Obtener descripción del pedido.
+     * 
      * @since    1.0.0
-     * @param    WC_Order    $order    Pedido.
-     * @return   string                Descripción.
+     * @access   private
+     * @param    WC_Order \$order Pedido de WooCommerce.
+     * @return   string          Descripción formateada del pedido.
      */
     private function get_order_description($order) {
         $items = array();
