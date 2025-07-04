@@ -34,7 +34,6 @@ function wzi_create_mapping_table() {
             zoho_field VARCHAR(255) NOT NULL, -- Zoho field API name (e.g., First_Name, Item_Name, SKU)
             zoho_field_label VARCHAR(255) DEFAULT NULL, -- Human-readable label for Zoho field
             direction VARCHAR(20) DEFAULT 'wc_to_zoho', -- wc_to_zoho, zoho_to_wc, bidirectional
-            direction VARCHAR(20) DEFAULT 'wc_to_zoho', -- wc_to_zoho, zoho_to_wc, bidirectional
             transform_function VARCHAR(255) DEFAULT NULL, -- Stores the name of a PHP callback function for data transformation
             is_custom BOOLEAN NOT NULL DEFAULT 0, -- 1 if this is a user-defined mapping, 0 for default/system
             is_active BOOLEAN NOT NULL DEFAULT 1, -- Whether this mapping is currently active
