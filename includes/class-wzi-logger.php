@@ -2,7 +2,7 @@
 /**
  * Sistema de logs del plugin
  *
- * @link       https://tudominio.com
+ * @link       https://tudominio.com 
  * @since      1.0.0
  *
  * @package    WooCommerce_Zoho_Integration
@@ -11,575 +11,337 @@
 
 /**
  * Sistema de logs del plugin.
- *
- * Esta clase maneja todo el registro de logs del plugin,
- * incluyendo logs de sincronización, errores y debug.
- *
- * @since      1.0.0
- * @package    WooCommerce_Zoho_Integration
- * @subpackage WooCommerce_Zoho_Integration/includes
- * @author     Tu Nombre <tu@email.com>
  */
 class WZI_Logger {
 
-    /**
-     * Tabla de logs en la base de datos.
-     *
-     * @since    1.0.0
-     * @access   private
-     * @var      string    $table_name    Nombre de la tabla de logs.
-     */
     private $table_name;
-
-    /**
-     * Nivel de log actual.
-     *
-     * @since    1.0.0
-     * @access   private
-     * @var      string    $log_level    Nivel de log (debug, info, warning, error).
-     */
-    private $log_level;
-
-    /**
-     * Si el modo debug está activo.
-     *
-     * @since    1.0.0
-     * @access   private
-     * @var      bool    $debug_mode    Estado del modo debug.
-     */
+    private $log_level_numeric = array(
+        'debug'   => 100,
+        'info'    => 200,
+        'warning' => 300,
+        'error'   => 400,
+    );
+    private $current_log_level_numeric;
     private $debug_mode;
-
-    /**
-     * Directorio de logs.
-     *
-     * @since    1.0.0
-     * @access   private
-     * @var      string    $log_dir    Ruta del directorio de logs.
-     */
     private $log_dir;
 
-    /**
-     * Constructor.
-     *
-     * @since    1.0.0
-     */
     public function __construct() {
         global $wpdb;
         $this->table_name = $wpdb->prefix . 'wzi_sync_logs';
         
-        // Obtener configuración de debug
         $general_settings = get_option('wzi_general_settings', array());
         $this->debug_mode = isset($general_settings['debug_mode']) && $general_settings['debug_mode'] === 'yes';
         
-        // Establecer nivel de log
-        $this->log_level = $this->debug_mode ? 'debug' : 'info';
+        $config_log_level_setting = isset($general_settings['log_level']) ? $general_settings['log_level'] : 'info';
+        $this->current_log_level_numeric = $this->log_level_numeric[$config_log_level_setting] ?? $this->log_level_numeric['info'];
+        if ($this->debug_mode) {
+            $this->current_log_level_numeric = $this->log_level_numeric['debug'];
+        }
         
-        // Establecer directorio de logs
         $upload_dir = wp_upload_dir();
-        $this->log_dir = $upload_dir['basedir'] . '/wzi-logs';
-        
-        // Crear directorio si no existe
-        if (!file_exists($this->log_dir)) {
-            wp_mkdir_p($this->log_dir);
-            file_put_contents($this->log_dir . '/.htaccess', 'deny from all');
+        if (isset($upload_dir['basedir'])) {
+            $this->log_dir = $upload_dir['basedir'] . '/wzi-logs';
+            if (!file_exists($this->log_dir)) {
+                if (wp_mkdir_p($this->log_dir)) {
+                    @file_put_contents($this->log_dir . '/.htaccess', 'deny from all');
+                    @file_put_contents($this->log_dir . '/index.html', ''); 
+                }
+            }
+        } else {
+            $this->log_dir = WZI_PLUGIN_DIR . 'logs';
+             if (!file_exists($this->log_dir)) { @wp_mkdir_p($this->log_dir); }
+            error_log('WZI_Logger: wp_upload_dir() did not return basedir. Falling back to plugin logs directory.');
         }
     }
 
-    /**
-     * Registrar un log.
-     *
-     * @since    1.0.0
-     * @param    string    $sync_type        Tipo de sincronización.
-     * @param    string    $sync_direction   Dirección de la sincronización.
-     * @param    string    $status           Estado (success, error, warning, info).
-     * @param    string    $message          Mensaje del log.
-     * @param    array     $details          Detalles adicionales.
-     * @return   int|false                   ID del log insertado o false en caso de error.
-     */
-    public function log($sync_type, $sync_direction, $status, $message, $details = array()) {
+    public function log_entry($level, $message, $context = array()) {
         global $wpdb;
         
-        // Verificar nivel de log
-        if (!$this->should_log($status)) {
+        if (!$this->should_log($level)) {
             return false;
         }
         
-        // Preparar datos
-        $data = array(
-            'sync_type' => $sync_type,
-            'sync_direction' => $sync_direction,
-            'status' => $status,
-            'message' => $message,
-            'details' => json_encode($details),
-            'created_at' => current_time('mysql'),
+        $source = isset($context['source']) ? sanitize_text_field($context['source']) : 'general';
+        unset($context['source']); 
+        
+        $object_id = isset($context['object_id']) ? strval($context['object_id']) : null;
+        unset($context['object_id']);
+        
+        $object_type = isset($context['object_type']) ? sanitize_text_field($context['object_type']) : null;
+        unset($context['object_type']);
+
+        $data_to_insert = array(
+            'timestamp'   => current_time('mysql', 1), // GMT
+            'log_level'   => sanitize_text_field($level),
+            'source'      => $source,
+            'message'     => $message, 
+            'object_id'   => $object_id,
+            'object_type' => $object_type,
+            'details'     => !empty($context) ? wp_json_encode($context) : null,
         );
         
-        // Insertar en base de datos
-        $result = $wpdb->insert(
-            $this->table_name,
-            $data,
-            array('%s', '%s', '%s', '%s', '%s', '%s')
-        );
+        $formats = array('%s', '%s', '%s', '%s', '%s', '%s', '%s');
+        
+        $result = $wpdb->insert($this->table_name, $data_to_insert, $formats);
         
         if ($result === false) {
-            $this->log_to_file('error', 'Failed to insert log to database: ' . $wpdb->last_error);
+            $this->log_to_file('ERROR', 'DB Insert Failed: ' . $wpdb->last_error, $data_to_insert);
             return false;
         }
         
-        // También escribir en archivo si es error o modo debug
-        if ($status === 'error' || $this->debug_mode) {
-            $this->log_to_file($status, $message, array_merge($details, array(
-                'sync_type' => $sync_type,
-                'sync_direction' => $sync_direction,
-            )));
+        if ($level === 'error' || $this->debug_mode) {
+            $this->log_to_file(strtoupper($level), $message, $context);
         }
         
         return $wpdb->insert_id;
     }
 
-    /**
-     * Registrar log de información.
-     *
-     * @since    1.0.0
-     * @param    string    $message    Mensaje.
-     * @param    array     $context    Contexto adicional.
-     */
     public function info($message, $context = array()) {
-        $sync_type = isset($context['sync_type']) ? $context['sync_type'] : 'general';
-        $sync_direction = isset($context['sync_direction']) ? $context['sync_direction'] : 'none';
-        
-        return $this->log($sync_type, $sync_direction, 'info', $message, $context);
+        return $this->log_entry('info', $message, $context);
     }
 
-    /**
-     * Registrar log de advertencia.
-     *
-     * @since    1.0.0
-     * @param    string    $message    Mensaje.
-     * @param    array     $context    Contexto adicional.
-     */
     public function warning($message, $context = array()) {
-        $sync_type = isset($context['sync_type']) ? $context['sync_type'] : 'general';
-        $sync_direction = isset($context['sync_direction']) ? $context['sync_direction'] : 'none';
-        
-        return $this->log($sync_type, $sync_direction, 'warning', $message, $context);
+        return $this->log_entry('warning', $message, $context);
     }
 
-    /**
-     * Registrar log de error.
-     *
-     * @since    1.0.0
-     * @param    string    $message    Mensaje.
-     * @param    array     $context    Contexto adicional.
-     */
     public function error($message, $context = array()) {
-        $sync_type = isset($context['sync_type']) ? $context['sync_type'] : 'general';
-        $sync_direction = isset($context['sync_direction']) ? $context['sync_direction'] : 'none';
-        
-        // Agregar backtrace si está en modo debug
         if ($this->debug_mode && !isset($context['backtrace'])) {
-            $context['backtrace'] = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10);
+            $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 7); 
+            array_shift($backtrace); 
+            $context['backtrace'] = $this->format_backtrace($backtrace);
         }
-        
-        return $this->log($sync_type, $sync_direction, 'error', $message, $context);
+        return $this->log_entry('error', $message, $context);
     }
 
-    /**
-     * Registrar log de debug.
-     *
-     * @since    1.0.0
-     * @param    string    $message    Mensaje.
-     * @param    array     $context    Contexto adicional.
-     */
     public function debug($message, $context = array()) {
-        if (!$this->debug_mode) {
-            return false;
+        return $this->log_entry('debug', $message, $context);
+    }
+    
+    private function format_backtrace($backtrace_array) {
+        $formatted = array();
+        foreach ($backtrace_array as $item) {
+            $formatted_item = (isset($item['file']) ? basename($item['file']) : '{unknown file}') . ':' .
+                              (isset($item['line']) ? $item['line'] : '{unknown line}');
+            $func_call = '';
+            if (isset($item['class'])) $func_call .= $item['class'];
+            if (isset($item['type'])) $func_call .= $item['type'];
+            if (isset($item['function'])) $func_call .= $item['function'] . '()';
+            if ($func_call) $formatted_item .= ' - ' . $func_call;
+            
+            $formatted[] = $formatted_item;
         }
-        
-        $sync_type = isset($context['sync_type']) ? $context['sync_type'] : 'general';
-        $sync_direction = isset($context['sync_direction']) ? $context['sync_direction'] : 'none';
-        
-        return $this->log($sync_type, $sync_direction, 'debug', $message, $context);
+        return $formatted;
     }
 
-    /**
-     * Verificar si se debe registrar según el nivel.
-     *
-     * @since    1.0.0
-     * @param    string    $status    Estado del log.
-     * @return   bool                 Si se debe registrar.
-     */
-    private function should_log($status) {
-        $levels = array(
-            'debug' => 0,
-            'info' => 1,
-            'warning' => 2,
-            'error' => 3,
-        );
-        
-        $current_level = isset($levels[$this->log_level]) ? $levels[$this->log_level] : 1;
-        $status_level = isset($levels[$status]) ? $levels[$status] : 1;
-        
-        return $status_level >= $current_level;
+    private function should_log($level) {
+        $level_numeric = $this->log_level_numeric[$level] ?? $this->log_level_numeric['info'];
+        return $level_numeric >= $this->current_log_level_numeric;
     }
 
-    /**
-     * Escribir log en archivo.
-     *
-     * @since    1.0.0
-     * @param    string    $level      Nivel del log.
-     * @param    string    $message    Mensaje.
-     * @param    array     $context    Contexto adicional.
-     */
-    private function log_to_file($level, $message, $context = array()) {
-        $filename = $this->log_dir . '/wzi-' . date('Y-m-d') . '.log';
-        
+    private function log_to_file($level_string, $message, $context = array()) {
+        if (!$this->log_dir || (!is_writable($this->log_dir) && !wp_mkdir_p($this->log_dir))) {
+            return;
+        }
+        if (!$this->debug_mode && strtoupper($level_string) !== 'ERROR') {
+            return; 
+        }
+        $filename = $this->log_dir . '/wzi-sync-' . date('Y-m-d') . '.log';
         $log_entry = sprintf(
-            "[%s] [%s] %s %s\n",
-            date('Y-m-d H:i:s'),
-            strtoupper($level),
+            "[%s] [%s] %s %sn",
+            current_time('mysql'), 
+            strtoupper($level_string),
             $message,
-            !empty($context) ? json_encode($context) : ''
+            !empty($context) ? wp_json_encode($context, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) : ''
         );
-        
-        file_put_contents($filename, $log_entry, FILE_APPEND | LOCK_EX);
+        @file_put_contents($filename, $log_entry, FILE_APPEND | LOCK_EX);
     }
 
-    /**
-     * Obtener logs.
-     *
-     * @since    1.0.0
-     * @param    array    $args    Argumentos de consulta.
-     * @return   array             Array con logs y total.
-     */
-    public function get_logs($args = array()) {
+    public function get_logs($args = array()) { // ... (resto del método get_logs como te lo di antes) ... 
         global $wpdb;
-        
         $defaults = array(
-            'page' => 1,
-            'per_page' => 20,
-            'sync_type' => '',
-            'status' => '',
-            'date_from' => '',
-            'date_to' => '',
-            'search' => '',
-            'orderby' => 'created_at',
-            'order' => 'DESC',
+            'page' => 1, 'per_page' => 20, 'source' => '', 'log_level' => '',
+            'date_from' => '', 'date_to' => '', 'search' => '',
+            'orderby' => 'timestamp', 'order' => 'DESC',
         );
-        
         $args = wp_parse_args($args, $defaults);
-        
-        // Construir consulta
         $where = array('1=1');
         $values = array();
-        
-        if (!empty($args['sync_type'])) {
-            $where[] = 'sync_type = %s';
-            $values[] = $args['sync_type'];
-        }
-        
-        if (!empty($args['status'])) {
-            $where[] = 'status = %s';
-            $values[] = $args['status'];
-        }
-        
-        if (!empty($args['date_from'])) {
-            $where[] = 'created_at >= %s';
-            $values[] = $args['date_from'] . ' 00:00:00';
-        }
-        
-        if (!empty($args['date_to'])) {
-            $where[] = 'created_at <= %s';
-            $values[] = $args['date_to'] . ' 23:59:59';
-        }
-        
+        if (!empty($args['source'])) { $where[] = 'source = %s'; $values[] = $args['source']; }
+        if (!empty($args['log_level'])) { $where[] = 'log_level = %s'; $values[] = $args['log_level']; }
+        if (!empty($args['date_from'])) { $where[] = 'timestamp >= %s'; $values[] = $args['date_from'] . ' 00:00:00'; }
+        if (!empty($args['date_to'])) { $where[] = 'timestamp <= %s'; $values[] = $args['date_to'] . ' 23:59:59'; }
         if (!empty($args['search'])) {
-            $where[] = '(message LIKE %s OR details LIKE %s)';
+            $where[] = '(message LIKE %s OR details LIKE %s OR object_id LIKE %s)';
             $search_term = '%' . $wpdb->esc_like($args['search']) . '%';
-            $values[] = $search_term;
-            $values[] = $search_term;
+            $values[] = $search_term; $values[] = $search_term; $values[] = $search_term;
         }
-        
         $where_clause = implode(' AND ', $where);
-        
-        // Contar total
         $count_query = "SELECT COUNT(*) FROM {$this->table_name} WHERE {$where_clause}";
-        if (!empty($values)) {
-            $count_query = $wpdb->prepare($count_query, $values);
-        }
+        if (!empty($values)) { $count_query = $wpdb->prepare($count_query, $values); }
         $total = $wpdb->get_var($count_query);
-        
-        // Obtener logs
         $offset = ($args['page'] - 1) * $args['per_page'];
-        $orderby = in_array($args['orderby'], array('id', 'sync_type', 'status', 'created_at')) ? $args['orderby'] : 'created_at';
+        $orderby_allowed = array('log_id', 'timestamp', 'log_level', 'source', 'object_id', 'object_type');
+        $orderby = in_array($args['orderby'], $orderby_allowed) ? $args['orderby'] : 'timestamp';
         $order = strtoupper($args['order']) === 'ASC' ? 'ASC' : 'DESC';
-        
-        $query = "SELECT * FROM {$this->table_name} WHERE {$where_clause} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d";
-        $values[] = $args['per_page'];
-        $values[] = $offset;
-        
-        $logs = $wpdb->get_results($wpdb->prepare($query, $values));
-        
-        // Decodificar detalles JSON
-        foreach ($logs as &$log) {
-            $log->details = json_decode($log->details, true);
+        $main_query_sql_parts = array("SELECT * FROM {$this->table_name}");
+        if ($where_clause !== '1=1') { $main_query_sql_parts[] = "WHERE {$where_clause}"; }
+        $main_query_sql_parts[] = "ORDER BY {$orderby} {$order}";
+        $main_query_sql_parts[] = "LIMIT %d OFFSET %d";
+        $final_query_sql = implode(' ', $main_query_sql_parts);
+        $query_values = $values; 
+        $query_values[] = $args['per_page'];
+        $query_values[] = $offset;
+        $logs = $wpdb->get_results($wpdb->prepare($final_query_sql, $query_values));
+        if (is_array($logs)) {
+            foreach ($logs as &$log) {
+                if (!empty($log->details)) {
+                    $decoded_details = json_decode($log->details, true);
+                    $log->details = (json_last_error() === JSON_ERROR_NONE) ? $decoded_details : $log->details;
+                }
+            }
         }
-        
         return array(
-            'logs' => $logs,
-            'total' => $total,
-            'pages' => ceil($total / $args['per_page']),
+            'logs' => $logs, 'total' => $total,
+            'pages' => $args['per_page'] > 0 ? ceil($total / $args['per_page']) : 1,
             'current_page' => $args['page'],
         );
     }
 
-    /**
-     * Obtener resumen de logs.
-     *
-     * @since    1.0.0
-     * @param    string    $period    Período (today, week, month).
-     * @return   array                Array con estadísticas.
-     */
-    public function get_log_summary($period = 'today') {
+    public function get_log_summary($period = 'today') { // ... (resto del método get_log_summary como te lo di antes) ...
         global $wpdb;
-        
         $date_condition = '';
-        
         switch ($period) {
-            case 'today':
-                $date_condition = 'DATE(created_at) = CURDATE()';
-                break;
-            case 'week':
-                $date_condition = 'created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)';
-                break;
-            case 'month':
-                $date_condition = 'created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)';
-                break;
-            default:
-                $date_condition = '1=1';
+            case 'today': $date_condition = 'DATE(timestamp) = CURDATE()'; break;
+            case 'week': $date_condition = 'timestamp >= DATE_SUB(NOW(), INTERVAL 7 DAY)'; break;
+            case 'month': $date_condition = 'timestamp >= DATE_SUB(NOW(), INTERVAL 30 DAY)'; break;
+            default: $date_condition = '1=1';
         }
-        
-        // Obtener conteos por estado
-        $query = "SELECT status, COUNT(*) as count 
-                  FROM {$this->table_name} 
-                  WHERE {$date_condition} 
-                  GROUP BY status";
-        
-        $results = $wpdb->get_results($query);
-        
-        $summary = array(
-            'total' => 0,
-            'success' => 0,
-            'error' => 0,
-            'warning' => 0,
-            'info' => 0,
-        );
-        
-        foreach ($results as $result) {
-            $summary[$result->status] = intval($result->count);
-            $summary['total'] += intval($result->count);
+        $query = "SELECT log_level, COUNT(*) as count FROM {$this->table_name} WHERE {$date_condition} GROUP BY log_level";
+        $results = $wpdb->get_results($query, ARRAY_A);
+        $summary = array('total' => 0, 'debug' => 0, 'info' => 0, 'warning' => 0, 'error' => 0);
+        if (is_array($results)) {
+            foreach ($results as $result) {
+                if (isset($summary[$result['log_level']])) {
+                    $summary[$result['log_level']] = intval($result['count']);
+                    $summary['total'] += intval($result['count']);
+                }
+            }
         }
-        
-        // Obtener conteos por tipo de sincronización
-        $query = "SELECT sync_type, COUNT(*) as count 
-                  FROM {$this->table_name} 
-                  WHERE {$date_condition} 
-                  GROUP BY sync_type";
-        
-        $sync_types = $wpdb->get_results($query);
-        $summary['by_type'] = array();
-        
-        foreach ($sync_types as $type) {
-            $summary['by_type'][$type->sync_type] = intval($type->count);
+        $query_source = "SELECT source, COUNT(*) as count FROM {$this->table_name} WHERE {$date_condition} GROUP BY source";
+        $source_results = $wpdb->get_results($query_source, ARRAY_A);
+        $summary['by_source'] = array();
+         if (is_array($source_results)) {
+            foreach ($source_results as $type) {
+                $summary['by_source'][$type['source']] = intval($type['count']);
+            }
         }
-        
-        // Obtener últimos errores
-        $query = "SELECT * FROM {$this->table_name} 
-                  WHERE status = 'error' AND {$date_condition} 
-                  ORDER BY created_at DESC 
-                  LIMIT 5";
-        
-        $summary['recent_errors'] = $wpdb->get_results($query);
-        
+        $summary['recent_errors'] = $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM {$this->table_name} 
+            WHERE log_level = %s AND {$date_condition} 
+            ORDER BY timestamp DESC LIMIT %d", 
+            'error', 5
+        ));
         return $summary;
     }
 
-    /**
-     * Limpiar logs antiguos.
-     *
-     * @since    1.0.0
-     * @param    int    $days    Número de días a mantener (0 = limpiar todos).
-     * @return   int|false       Número de filas eliminadas o false en error.
-     */
-    public function cleanup_old_logs($days = null) {
+    public function cleanup_old_logs($days = null) { // ... (resto del método cleanup_old_logs como te lo di antes) ...
         global $wpdb;
-        
         if ($days === null) {
             $general_settings = get_option('wzi_general_settings', array());
             $days = isset($general_settings['log_retention_days']) ? intval($general_settings['log_retention_days']) : 30;
         }
-        
-        if ($days <= 0) {
-            return false;
-        }
-        
-        // Limpiar de la base de datos
-        $query = $wpdb->prepare(
-            "DELETE FROM {$this->table_name} WHERE created_at < DATE_SUB(NOW(), INTERVAL %d DAY)",
-            $days
-        );
-        
-        $deleted_db = $wpdb->query($query);
-        
-        // Limpiar archivos de log
+        if (!is_numeric($days) || $days <= 0) return false;
+        $deleted_db = $wpdb->query($wpdb->prepare("DELETE FROM {$this->table_name} WHERE timestamp < DATE_SUB(NOW(), INTERVAL %d DAY)", $days));
         $deleted_files = 0;
-        $files = glob($this->log_dir . '/*.log');
-        $cutoff_time = time() - ($days * 24 * 60 * 60);
-        
-        foreach ($files as $file) {
-            if (is_file($file) && filemtime($file) < $cutoff_time) {
-                if (unlink($file)) {
-                    $deleted_files++;
+        if ($this->log_dir && is_dir($this->log_dir)) {
+            $files = glob($this->log_dir . '/*.log');
+            if (is_array($files)) {
+                $cutoff_time = time() - ($days * 24 * 60 * 60);
+                foreach ($files as $file) {
+                    if (is_file($file) && filemtime($file) < $cutoff_time) {
+                        if (@unlink($file)) $deleted_files++;
+                    }
                 }
             }
         }
-        
         $this->info('Logs cleanup completed', array(
+            'source' => 'logger_cleanup',
             'deleted_from_db' => $deleted_db,
             'deleted_files' => $deleted_files,
+            'retention_days' => $days
         ));
-        
-        return $deleted_db;
+        return $deleted_db !== false;
     }
 
-    /**
-     * Limpiar todos los logs.
-     *
-     * @since    1.0.0
-     * @param    int    $days    Si se especifica, solo limpiar logs más antiguos que estos días.
-     * @return   bool             Resultado de la operación.
-     */
-    public function clear_logs($days = 0) {
+    public function clear_logs($days = 0) { // ... (resto del método clear_logs como te lo di antes) ...
         global $wpdb;
-        
-        if ($days > 0) {
-            return $this->cleanup_old_logs($days) !== false;
-        }
-        
-        // Limpiar toda la tabla
+        if ($days > 0) return $this->cleanup_old_logs($days);
         $result = $wpdb->query("TRUNCATE TABLE {$this->table_name}");
-        
-        // Limpiar todos los archivos de log
-        $files = glob($this->log_dir . '/*.log');
-        foreach ($files as $file) {
-            if (is_file($file)) {
-                unlink($file);
+        if ($this->log_dir && is_dir($this->log_dir)) {
+            $files = glob($this->log_dir . '/*.log');
+            if (is_array($files)) {
+                foreach ($files as $file) {
+                    if (is_file($file)) @unlink($file);
+                }
             }
         }
-        
         return $result !== false;
     }
 
-    /**
-     * Exportar logs.
-     *
-     * @since    1.0.0
-     * @param    string    $format    Formato de exportación (csv, json).
-     * @param    array     $args      Argumentos de filtro.
-     * @return   string               Contenido del archivo o ruta del archivo.
-     */
-    public function export_logs($format = 'csv', $args = array()) {
-        $logs_data = $this->get_logs(array_merge($args, array('per_page' => -1)));
+    public function export_logs($format = 'csv', $args = array()) { // ... (resto del método export_logs como te lo di antes) ...
+        $logs_data = $this->get_logs(array_merge($args, array('per_page' => -1, 'page' => 1))); 
         $logs = $logs_data['logs'];
-        
         if ($format === 'csv') {
             $csv_data = array();
-            $csv_data[] = array('ID', 'Tipo', 'Dirección', 'Estado', 'Mensaje', 'Detalles', 'Fecha');
-            
-            foreach ($logs as $log) {
-                $csv_data[] = array(
-                    $log->id,
-                    $log->sync_type,
-                    $log->sync_direction,
-                    $log->status,
-                    $log->message,
-                    json_encode($log->details),
-                    $log->created_at,
-                );
+            $csv_data[] = array('Log ID', 'Timestamp', 'Level', 'Source', 'Object ID', 'Object Type', 'Message', 'Details');
+            if (is_array($logs)) {
+                foreach ($logs as $log) {
+                    $csv_data[] = array(
+                        $log->log_id, $log->timestamp, $log->log_level, $log->source,
+                        $log->object_id, $log->object_type, $log->message,
+                        is_array($log->details) ? wp_json_encode($log->details) : $log->details,
+                    );
+                }
             }
-            
-            $output = '';
-            foreach ($csv_data as $row) {
-                $output .= implode(',', array_map('wzi_csv_escape', $row)) . "\n";
-            }
-            
-            return $output;
+            $output = fopen('php://temp', 'w'); 
+            foreach ($csv_data as $row) { fputcsv($output, $row); }
+            rewind($output);
+            $csv_string = stream_get_contents($output);
+            fclose($output);
+            return $csv_string;
         } elseif ($format === 'json') {
-            return json_encode($logs, JSON_PRETTY_PRINT);
+            return wp_json_encode($logs, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         }
-        
         return '';
     }
 
-    /**
-     * Obtener tipos de sincronización únicos.
-     *
-     * @since    1.0.0
-     * @return   array    Array de tipos de sincronización.
-     */
-    public function get_sync_types() {
+    public function get_log_sources() { 
         global $wpdb;
-        
-        $query = "SELECT DISTINCT sync_type FROM {$this->table_name} ORDER BY sync_type";
+        $query = "SELECT DISTINCT source FROM {$this->table_name} WHERE source IS NOT NULL AND source != '' ORDER BY source";
         return $wpdb->get_col($query);
     }
 
-    /**
-     * Obtener archivo de log actual.
-     *
-     * @since    1.0.0
-     * @return   string    Ruta del archivo de log.
-     */
-    public function get_current_log_file() {
-        return $this->log_dir . '/wzi-' . date('Y-m-d') . '.log';
+     public function get_log_levels() {
+        global $wpdb;
+        $query = "SELECT DISTINCT log_level FROM {$this->table_name} WHERE log_level IS NOT NULL AND log_level != '' ORDER BY log_level";
+        return $wpdb->get_col($query);
     }
 
-    /**
-     * Obtener tamaño total de logs.
-     *
-     * @since    1.0.0
-     * @return   int    Tamaño en bytes.
-     */
+    public function get_current_log_file() {
+        if (!$this->log_dir) return '';
+        return $this->log_dir . '/wzi-sync-' . date('Y-m-d') . '.log';
+    }
+
     public function get_logs_size() {
         $total_size = 0;
-        
-        // Tamaño de archivos
-        $files = glob($this->log_dir . '/*.log');
-        foreach ($files as $file) {
-            if (is_file($file)) {
-                $total_size += filesize($file);
+        if ($this->log_dir && is_dir($this->log_dir)) {
+            $files = glob($this->log_dir . '/*.log');
+             if (is_array($files)) {
+                foreach ($files as $file) {
+                    if (is_file($file)) $total_size += @filesize($file);
+                }
             }
         }
-        
-        // Estimar tamaño en base de datos
-        global $wpdb;
-        $db_size = $wpdb->get_var("SELECT SUM(LENGTH(message) + LENGTH(details)) FROM {$this->table_name}");
-        $total_size += intval($db_size);
-        
         return $total_size;
     }
-}
-
-/**
- * Función auxiliar para escapar valores CSV.
- *
- * @since    1.0.0
- * @param    string    $value    Valor a escapar.
- * @return   string              Valor escapado.
- */
-function wzi_csv_escape($value) {
-    if (strpos($value, ',') !== false || strpos($value, '"') !== false || strpos($value, "\n") !== false) {
-        return '"' . str_replace('"', '""', $value) . '"';
-    }
-    return $value;
 }
