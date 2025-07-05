@@ -16,17 +16,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Creates or updates the field mapping table.
  *
- * @global wpdb \$wpdb WordPress database abstraction object.
+ * @global wpdb $wpdb WordPress database abstraction object.
  */
 function wzi_create_mapping_table() {
-    global \$wpdb;
-    \$table_name = \$wpdb->prefix . 'wzi_field_mapping';
-    \$charset_collate = \$wpdb->get_charset_collate();
-    \$target_db_version = '1.1'; // The version this file defines
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'wzi_field_mapping';
+    $charset_collate = $wpdb->get_charset_collate();
+    $target_db_version = '1.1'; // The version this file defines
 
     // SQL DDL para la tabla (versión 1.1 con transform_function)
     // Corregido: Eliminada la línea 'direction' duplicada
-    \$sql = "CREATE TABLE \$table_name (
+    $sql = "CREATE TABLE $table_name (
         map_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
         module VARCHAR(100) NOT NULL, -- e.g., customer, product, order
         wc_field VARCHAR(255) NOT NULL, -- WooCommerce field key (e.g., billing_first_name, _sku, meta:my_custom_field)
@@ -45,47 +45,47 @@ function wzi_create_mapping_table() {
         INDEX idx_module (module),
         INDEX idx_zoho_module (zoho_module),
         INDEX idx_is_active (is_active)
-    ) \$charset_collate;";
+    ) $charset_collate;";
 
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-    dbDelta( \$sql ); 
+    dbDelta( $sql ); 
 
-    \$current_db_version = get_option( 'wzi_field_mapping_table_version', '0' );
+    $current_db_version = get_option( 'wzi_field_mapping_table_version', '0' );
 
-    if ( \$wpdb->get_var( \$wpdb->prepare( "SHOW TABLES LIKE %s", \$table_name ) ) === \$table_name ) {
+    if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name ) ) === $table_name ) {
         // Verificar si la columna 'transform_function' existe
-        \$column_exists_transform = \$wpdb->get_results( \$wpdb->prepare(
+        $column_exists_transform = $wpdb->get_results( $wpdb->prepare(
             "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
             WHERE table_name = %s AND column_name = %s AND table_schema = %s",
-            \$table_name, 'transform_function', DB_NAME
+            $table_name, 'transform_function', DB_NAME
         ) );
 
-        if ( empty( \$column_exists_transform ) ) {
-            \$wpdb->query("ALTER TABLE \$table_name ADD COLUMN transform_function VARCHAR(255) DEFAULT NULL AFTER direction");
-            error_log( 'WooCommerce Zoho Integration: Database table ' . \$table_name . ' - ADDED transform_function column via direct ALTER.' );
+        if ( empty( $column_exists_transform ) ) {
+            $wpdb->query("ALTER TABLE $table_name ADD COLUMN transform_function VARCHAR(255) DEFAULT NULL AFTER direction");
+            error_log( 'WooCommerce Zoho Integration: Database table ' . $table_name . ' - ADDED transform_function column via direct ALTER.' );
         }
         
         // Asegurar que 'is_active' exista
-        \$column_exists_is_active = \$wpdb->get_results( \$wpdb->prepare(
+        $column_exists_is_active = $wpdb->get_results( $wpdb->prepare(
             "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
             WHERE table_name = %s AND column_name = %s AND table_schema = %s",
-            \$table_name, 'is_active', DB_NAME
+            $table_name, 'is_active', DB_NAME
         ) );
-         if ( empty( \$column_exists_is_active ) ) {
-            \$wpdb->query("ALTER TABLE \$table_name ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT 1 AFTER is_custom");
-            error_log( 'WooCommerce Zoho Integration: Database table ' . \$table_name . ' - ADDED is_active column via direct ALTER.' );
+         if ( empty( $column_exists_is_active ) ) {
+            $wpdb->query("ALTER TABLE $table_name ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT 1 AFTER is_custom");
+            error_log( 'WooCommerce Zoho Integration: Database table ' . $table_name . ' - ADDED is_active column via direct ALTER.' );
         }
 
-        if ( version_compare( \$current_db_version, \$target_db_version, '<' ) ) {
-            update_option( 'wzi_field_mapping_table_version', \$target_db_version );
-            error_log( 'WooCommerce Zoho Integration: Database table ' . \$table_name . ' version updated to ' . \$target_db_version );
-        } elseif (\$current_db_version === '0' && \$wpdb->last_error === '') { 
-             update_option( 'wzi_field_mapping_table_version', \$target_db_version );
-             error_log( 'WooCommerce Zoho Integration: Database table ' . \$table_name . ' created with version ' . \$target_db_version );
+        if ( version_compare( $current_db_version, $target_db_version, '<' ) ) {
+            update_option( 'wzi_field_mapping_table_version', $target_db_version );
+            error_log( 'WooCommerce Zoho Integration: Database table ' . $table_name . ' version updated to ' . $target_db_version );
+        } elseif ($current_db_version === '0' && $wpdb->last_error === '') { 
+             update_option( 'wzi_field_mapping_table_version', $target_db_version );
+             error_log( 'WooCommerce Zoho Integration: Database table ' . $table_name . ' created with version ' . $target_db_version );
         }
 
     } else {
-        error_log( 'WooCommerce Zoho Integration: Error - Database table ' . \$table_name . ' could not be created/found after dbDelta. SQL used: ' . \$sql );
+        error_log( 'WooCommerce Zoho Integration: Error - Database table ' . $table_name . ' could not be created/found after dbDelta. SQL used: ' . $sql );
     }
 }
 
