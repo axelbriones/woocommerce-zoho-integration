@@ -155,15 +155,37 @@ class WZI_Activator {
             $wpdb->insert(
                 $mapping_table,
                 array(
-                    'entity_type' => $mapping[0],
-                    'woo_field' => $mapping[1],
+                    'module' => $mapping[0],             // entity_type -> module
+                    'wc_field' => $mapping[1],           // woo_field -> wc_field
                     'zoho_field' => $mapping[2],
-                    'sync_direction' => $mapping[3],
+                    'direction' => $mapping[3],          // sync_direction -> direction
                     'transform_function' => $mapping[4],
+                    // Faltaban zoho_module y is_custom/is_active si se quieren poner valores no por defecto aquí
+                    // Asumiendo que zoho_module es el mismo que el módulo de Zoho destino (ej. Contacts para customer)
+                    // y que los mapeos por defecto son 'is_custom' = 0, 'is_active' = 1
+                    'zoho_module' => self::map_entity_to_default_zoho_module($mapping[0]), // Helper para obtener el módulo Zoho
+                    'is_custom' => 0,
+                    'is_active' => 1,
                 ),
-                array('%s', '%s', '%s', '%s', '%s')
+                array('%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d') // Actualizar formatos
             );
         }
+    }
+
+    /**
+     * Mapear tipo de entidad de WC a módulo de Zoho por defecto.
+     * Helper para set_default_field_mappings.
+     *
+     * @param string $entity_type Tipo de entidad de WooCommerce (e.g., 'customer', 'order', 'product')
+     * @return string Nombre del módulo de Zoho correspondiente.
+     */
+    private static function map_entity_to_default_zoho_module($entity_type) {
+        $map = array(
+            'customer' => 'Contacts', // O 'Leads' según la configuración deseada
+            'order'    => 'Sales_Orders', // O 'Deals'
+            'product'  => 'Products', // O 'Items' si se usa más Zoho Inventory/Books para productos
+        );
+        return $map[$entity_type] ?? ucfirst($entity_type) . 's'; // Fallback simple
     }
     
     /**
