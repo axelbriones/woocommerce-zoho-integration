@@ -79,15 +79,16 @@ class WZI_Sync_Orders {
         $mapping_table = $wpdb->prefix . 'wzi_field_mapping';
         
         $mappings = $wpdb->get_results($wpdb->prepare(
-            "SELECT woo_field, zoho_field, sync_direction, transform_function FROM {$mapping_table} 
-             WHERE entity_type = %s AND is_active = 1",
+            "SELECT wc_field, zoho_field, direction, transform_function FROM {$mapping_table}
+             WHERE module = %s AND is_active = 1", // woo_field -> wc_field, sync_direction -> direction, entity_type -> module
             'order' 
         ));
         
         foreach ($mappings as $mapping) {
-            $this->field_mapping[$mapping->woo_field] = array(
+            // Al acceder a las propiedades del objeto $mapping, usar los nombres de columna corregidos
+            $this->field_mapping[$mapping->wc_field] = array(
                 'zoho_field' => $mapping->zoho_field,
-                'sync_direction' => $mapping->sync_direction,
+                'sync_direction' => $mapping->direction, // Corregido aquí también
                 'transform_function' => $mapping->transform_function,
             );
         }

@@ -696,18 +696,22 @@ class WZI_Sync_Manager {
         );
         
         // Añadir última sincronización
-        $last_sync = $wpdb->get_row(
-            "SELECT * FROM {$wpdb->prefix}wzi_sync_logs 
-             WHERE sync_type != 'general' 
-             ORDER BY created_at DESC 
-             LIMIT 1"
-        );
+        $logs_table_name = $wpdb->prefix . 'wzi_sync_logs'; // Definir nombre de tabla para claridad
+        $last_sync = $wpdb->get_row( $wpdb->prepare(
+            "SELECT * FROM {$logs_table_name}
+             WHERE source != %s
+             ORDER BY timestamp DESC
+             LIMIT 1",
+            'general'
+        ));
         
         if ($last_sync) {
+            // Usar los nombres de columna correctos del objeto $last_sync
+            // Asumiendo que 'status' se refiere a 'log_level' y 'sync_type' a 'source'
             $this->sync_status['last_sync'] = array(
-                'type' => $last_sync->sync_type,
-                'status' => $last_sync->status,
-                'time' => $last_sync->created_at,
+                'type' => $last_sync->source,       // sync_type -> source
+                'status' => $last_sync->log_level,  // status -> log_level
+                'time' => $last_sync->timestamp,   // created_at -> timestamp
             );
         }
         
@@ -798,55 +802,82 @@ class WZI_Sync_Manager {
         global $wpdb;
         
         $date_condition = '';
+        $logs_table_name = $wpdb->prefix . 'wzi_sync_logs'; // Definir nombre de tabla
         
         switch ($period) {
             case 'today':
-                $date_condition = "AND DATE(created_at) = CURDATE()";
+                // Usar placeholder %s para el nombre de la columna y escapar correctamente
+                $date_condition = $wpdb->prepare(" AND DATE(timestamp) = CURDATE()");
                 break;
             case 'week':
-                $date_condition = "AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
+                $date_condition = $wpdb->prepare(" AND timestamp >= DATE_SUB(NOW(), INTERVAL 7 DAY)");
                 break;
             case 'month':
-                $date_condition = "AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
+                $date_condition = $wpdb->prepare(" AND timestamp >= DATE_SUB(NOW(), INTERVAL 30 DAY)");
                 break;
         }
         
-        // Estadísticas por tipo
-        $query = "SELECT sync_type, sync_direction, status, COUNT(*) as count 
-                  FROM {$wpdb->prefix}wzi_sync_logs 
-                  WHERE sync_type != 'general' {$date_condition}
-                  GROUP BY sync_type, sync_direction, status";
+        // Estadísticas por tipo (source) y nivel de log (log_level)
+        // Se omite sync_direction ya que no está en la tabla de logs.
+        // Se asume que 'status' en la lógica original se refería al log_level (e.g., 'INFO', 'ERROR')
+        $query = $wpdb->prepare(
+            "SELECT source, log_level, COUNT(*) as count
+             FROM {$logs_table_name}
+             WHERE source != %s {$date_condition}
+             GROUP BY source, log_level",
+            'general'
+        );
         
         $results = $wpdb->get_results($query);
         
         $stats = array(
-            'by_type' => array(),
+            'by_type' => array(), // Cambiado para reflejar la nueva estructura de agrupación
             'totals' => array(
-                'success' => 0,
-                'error' => 0,
-                'total' => 0,
+                'INFO' => 0, // Contará todos los INFO como éxito general
+                'ERROR' => 0, // Contará todos los ERROR
+                'WARNING' => 0, // Contará todos los WARNING
+                'DEBUG' => 0, // Contará todos los DEBUG
+                'total_records' => 0, // Total de registros procesados en la consulta
             ),
         );
         
+        // Mapeo de log_level a un 'status' más genérico si es necesario para la lógica de 'totals'
+        // Por ejemplo, 'INFO' podría considerarse un éxito general para el conteo.
+        $status_map = [
+            'INFO' => 'INFO',
+            'ERROR' => 'ERROR',
+            'WARNING' => 'WARNING',
+            'DEBUG' => 'DEBUG',
+            // Otros log_levels si existen
+        ];
+
         foreach ($results as $row) {
-            if (!isset($stats['by_type'][$row->sync_type])) {
-                $stats['by_type'][$row->sync_type] = array(
-                    'woo_to_zoho' => array('success' => 0, 'error' => 0),
-                    'zoho_to_woo' => array('success' => 0, 'error' => 0),
+            $current_source = $row->source;
+            $current_log_level = strtoupper($row->log_level); // Normalizar a mayúsculas
+            $count = intval($row->count);
+
+            if (!isset($stats['by_type'][$current_source])) {
+                $stats['by_type'][$current_source] = array(
+                    // Ya no desglosamos por sync_direction aquí, solo por log_level
+                    'INFO' => 0,
+                    'ERROR' => 0,
+                    'WARNING' => 0,
+                    'DEBUG' => 0,
+                    'OTHER' => 0, // Para log_levels no mapeados explícitamente
                 );
             }
             
-            if (isset($stats['by_type'][$row->sync_type][$row->sync_direction])) {
-                $stats['by_type'][$row->sync_type][$row->sync_direction][$row->status] = intval($row->count);
+            if (isset($stats['by_type'][$current_source][$current_log_level])) {
+                $stats['by_type'][$current_source][$current_log_level] += $count;
+            } else {
+                $stats['by_type'][$current_source]['OTHER'] += $count; // Acumular niveles no esperados en 'OTHER'
             }
             
-            if ($row->status === 'success') {
-                $stats['totals']['success'] += intval($row->count);
-            } elseif ($row->status === 'error') {
-                $stats['totals']['error'] += intval($row->count);
+            // Actualizar totales generales
+            if (isset($status_map[$current_log_level])) {
+                $stats['totals'][$status_map[$current_log_level]] += $count;
             }
-            
-            $stats['totals']['total'] += intval($row->count);
+            $stats['totals']['total_records'] += $count;
         }
         
         return $stats;
