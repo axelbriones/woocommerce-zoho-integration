@@ -49,6 +49,9 @@ class WZI_Admin {
     public function __construct($plugin_name, $version) {
         $this->plugin_name = $plugin_name;
         $this->version = $version;
+
+        // Añadir gancho para la acción AJAX de prueba de conexión
+        add_action('wp_ajax_wzi_test_api_connection', array($this, 'ajax_test_api_connection'));
     }
 
     /**
@@ -388,46 +391,82 @@ class WZI_Admin {
      *
      * @since    1.0.0
      */
-    public function ajax_test_connection() {
+    public function ajax_test_api_connection() { // Nombre actualizado para coincidir
         check_ajax_referer('wzi_admin_nonce', 'nonce');
 
-        if (!current_user_can('manage_wzi_settings')) {
-            wp_die(__('No tienes permisos para realizar esta acción.', 'woocommerce-zoho-integration'));
+        if (!current_user_can('manage_wzi_settings')) { // Ajustar capacidad si es necesario
+            wp_send_json_error(array('message' => __('No tienes permisos para realizar esta acción.', 'woocommerce-zoho-integration')), 403);
+            return;
         }
 
-        $service = isset($_POST['service']) ? sanitize_text_field($_POST['service']) : 'crm';
-        $result = false;
-        $message = '';
+        $service = isset($_POST['service']) ? sanitize_text_field($_POST['service']) : null;
 
-        switch ($service) {
-            case 'crm':
-                $api = new WZI_Zoho_CRM();
-                $result = $api->test_connection();
-                break;
-            case 'inventory':
-                $api = new WZI_Zoho_Inventory();
-                $result = $api->test_connection();
-                break;
-            case 'books':
-                $api = new WZI_Zoho_Books();
-                $result = $api->test_connection();
-                break;
-            case 'campaigns':
-                $api = new WZI_Zoho_Campaigns();
-                $result = $api->test_connection();
-                break;
+        if (empty($service)) {
+            wp_send_json_error(array('message' => __('Servicio no especificado.', 'woocommerce-zoho-integration')), 400);
+            return;
         }
 
-        if ($result) {
-            $message = sprintf(__('Conexión exitosa con Zoho %s', 'woocommerce-zoho-integration'), ucfirst($service));
-        } else {
-            $message = sprintf(__('Error al conectar con Zoho %s', 'woocommerce-zoho-integration'), ucfirst($service));
-        }
+        $api_handler = null;
+        $service_name_map = array(
+            'crm' => 'Zoho CRM',
+            'inventory' => 'Zoho Inventory',
+            'books' => 'Zoho Books',
+            'campaigns' => 'Zoho Campaigns',
+        );
+        $service_display_name = isset($service_name_map[$service]) ? $service_name_map[$service] : ucfirst($service);
 
-        wp_send_json(array(
-            'success' => $result,
-            'message' => $message,
-        ));
+        try {
+            switch ($service) {
+                case 'crm':
+                    if (!class_exists('WZI_Zoho_CRM')) throw new Exception(sprintf(__('La clase %s no existe.', 'woocommerce-zoho-integration'), 'WZI_Zoho_CRM'));
+                    $api_handler = new WZI_Zoho_CRM();
+                    break;
+                case 'inventory':
+                    if (!class_exists('WZI_Zoho_Inventory')) throw new Exception(sprintf(__('La clase %s no existe.', 'woocommerce-zoho-integration'), 'WZI_Zoho_Inventory'));
+                    $api_handler = new WZI_Zoho_Inventory();
+                    break;
+                case 'books':
+                    if (!class_exists('WZI_Zoho_Books')) throw new Exception(sprintf(__('La clase %s no existe.', 'woocommerce-zoho-integration'), 'WZI_Zoho_Books'));
+                    $api_handler = new WZI_Zoho_Books();
+                    break;
+                case 'campaigns':
+                    if (!class_exists('WZI_Zoho_Campaigns')) throw new Exception(sprintf(__('La clase %s no existe.', 'woocommerce-zoho-integration'), 'WZI_Zoho_Campaigns'));
+                    $api_handler = new WZI_Zoho_Campaigns();
+                    break;
+                default:
+                    wp_send_json_error(array('message' => sprintf(__('Servicio %s no reconocido.', 'woocommerce-zoho-integration'), esc_html($service_display_name))), 400);
+                    return;
+            }
+
+            if (!method_exists($api_handler, 'test_connection')) {
+                 throw new Exception(sprintf(__('El método test_connection no existe en la clase para %s.', 'woocommerce-zoho-integration'), esc_html($service_display_name)));
+            }
+
+            $result = $api_handler->test_connection();
+
+            if ($result === true || (is_array($result) && !empty($result) && !is_wp_error($result))) { // Algunas pruebas pueden devolver datos en lugar de solo true
+                wp_send_json_success(array('message' => sprintf(__('Conexión con %s exitosa.', 'woocommerce-zoho-integration'), esc_html($service_display_name))));
+            } else {
+                 $error_message = sprintf(__('Error al conectar con %s.', 'woocommerce-zoho-integration'), esc_html($service_display_name));
+                 if (is_wp_error($result)) {
+                     $error_message .= ' ' . $result->get_error_message();
+                 } elseif (is_array($result) && isset($result['data']['message'])) { // A veces el error viene en data.message
+                    $error_message .= ' ' . $result['data']['message'];
+                 } elseif (is_string($result)) { // Si el test_connection devuelve un string de error
+                    $error_message .= ' ' . $result;
+                 }
+                wp_send_json_error(array('message' => $error_message));
+            }
+
+        } catch (Exception $e) {
+            $error_msg = sprintf(__('Error al probar la conexión para %s: %s', 'woocommerce-zoho-integration'), esc_html($service_display_name), $e->getMessage());
+            // Registrar el error real para depuración
+            if (class_exists('WZI_Logger')) {
+                $logger = new WZI_Logger();
+                $logger->error($error_msg, array('service' => $service, 'exception' => $e));
+            }
+            wp_send_json_error(array('message' => $error_msg));
+        }
     }
 
     /**
