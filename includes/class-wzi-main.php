@@ -162,7 +162,9 @@ class WZI_Main {
      */
     private function set_locale() {
         $plugin_i18n = new WZI_i18n();
-        $this->loader->add_action('plugins_loaded', $plugin_i18n, 'load_plugin_textdomain');
+        // Cambiar el hook de 'plugins_loaded' a 'init' para la carga del textdomain.
+        // El textdomain se define en la cabecera del plugin, WZI_i18n debería usar ese.
+        $this->loader->add_action('init', $plugin_i18n, 'load_plugin_textdomain');
     }
 
     /**

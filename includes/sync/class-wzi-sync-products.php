@@ -121,15 +121,17 @@ class WZI_Sync_Products {
         $mapping_table = $wpdb->prefix . 'wzi_field_mapping';
         
         $mappings = $wpdb->get_results($wpdb->prepare(
-            "SELECT * FROM {$mapping_table} 
-             WHERE entity_type = %s AND is_active = 1",
+            // Seleccionar explícitamente las columnas con los nombres correctos por claridad y eficiencia
+            "SELECT wc_field, zoho_field, direction, transform_function FROM {$mapping_table}
+             WHERE module = %s AND is_active = 1", // entity_type -> module
             'product'
         ));
         
         foreach ($mappings as $mapping) {
-            $this->field_mapping[$mapping->woo_field] = array(
+            // Usar los nombres de columna correctos del objeto $mapping
+            $this->field_mapping[$mapping->wc_field] = array(
                 'zoho_field' => $mapping->zoho_field,
-                'sync_direction' => $mapping->sync_direction,
+                'sync_direction' => $mapping->direction, // sync_direction -> direction
                 'transform_function' => $mapping->transform_function,
             );
         }
