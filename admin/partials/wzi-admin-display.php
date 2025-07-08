@@ -86,15 +86,15 @@ $sync_stats = $sync_manager->get_sync_stats('week');
             <h3><?php _e('Actividad de Hoy', 'woocommerce-zoho-integration'); ?></h3>
             <div class="log-stats">
                 <div class="stat">
-                    <span class="count"><?php echo $log_summary['total']; ?></span>
+                    <span class="count"><?php echo isset($log_summary['total']) ? intval($log_summary['total']) : 0; ?></span>
                     <span class="label"><?php _e('Total', 'woocommerce-zoho-integration'); ?></span>
                 </div>
                 <div class="stat success">
-                    <span class="count"><?php echo $log_summary['success']; ?></span>
-                    <span class="label"><?php _e('Exitosas', 'woocommerce-zoho-integration'); ?></span>
+                    <span class="count"><?php echo isset($log_summary['INFO']) ? intval($log_summary['INFO']) : (isset($log_summary['success']) ? intval($log_summary['success']) : 0); // Priorizar INFO si existe, sino el antiguo success ?></span>
+                    <span class="label"><?php _e('Exitosas (Info)', 'woocommerce-zoho-integration'); ?></span>
                 </div>
                 <div class="stat error">
-                    <span class="count"><?php echo $log_summary['error']; ?></span>
+                    <span class="count"><?php echo isset($log_summary['ERROR']) ? intval($log_summary['ERROR']) : (isset($log_summary['error']) ? intval($log_summary['error']) : 0); // Priorizar ERROR si existe, sino el antiguo error ?></span>
                     <span class="label"><?php _e('Errores', 'woocommerce-zoho-integration'); ?></span>
                 </div>
             </div>
@@ -134,60 +134,71 @@ $sync_stats = $sync_manager->get_sync_stats('week');
         <h2><?php _e('Estadísticas de la Última Semana', 'woocommerce-zoho-integration'); ?></h2>
         
         <div class="wzi-stats-grid">
-            <?php foreach ($sync_stats['by_type'] as $type => $data): ?>
+            <?php
+            $wzi_module_type_labels = array( // Debería definirse globalmente o pasarse, por ahora lo defino aquí para el ejemplo
+                'customers' => __('Clientes', 'woocommerce-zoho-integration'),
+                'orders'    => __('Pedidos', 'woocommerce-zoho-integration'),
+                'products'  => __('Productos', 'woocommerce-zoho-integration'),
+                'invoices'  => __('Facturas', 'woocommerce-zoho-integration'),
+                'coupons'   => __('Cupones', 'woocommerce-zoho-integration'),
+            );
+
+            if (isset($sync_stats['by_type']) && is_array($sync_stats['by_type'])):
+                foreach ($sync_stats['by_type'] as $source => $levels):
+                    $source_label = isset($wzi_module_type_labels[$source]) ? $wzi_module_type_labels[$source] : ucfirst($source);
+                    $total_source_records = 0;
+                    $total_source_errors = 0;
+                    if(is_array($levels)){ // Asegurarse que $levels es un array
+                        $total_source_records = array_sum($levels);
+                        $total_source_errors = isset($levels['ERROR']) ? $levels['ERROR'] : 0;
+                        if(isset($levels['WARNING'])) $total_source_errors += $levels['WARNING']; // Considerar WARNINGS como errores también para el resumen
+                    }
+            ?>
                 <div class="stat-card">
-                    <h4><?php echo ucfirst($type); ?></h4>
+                    <h4><?php echo esc_html($source_label); ?></h4>
                     <div class="stat-details">
-                        <div class="direction">
-                            <span class="label"><?php esc_html_e('WooCommerce → Zoho:', 'woocommerce-zoho-integration'); ?></span>
-                            <span class="success"><?php echo $data['woo_to_zoho']['success']; ?></span>
-                            <?php if ($data['woo_to_zoho']['error'] > 0): ?>
-                                <span class="error">
-                                    <?php
-                                    printf(
-                                        _n(
-                                            '(%s error)',
-                                            '(%s errores)',
-                                            $data['woo_to_zoho']['error'],
-                                            'woocommerce-zoho-integration'
-                                        ),
-                                        number_format_i18n($data['woo_to_zoho']['error'])
-                                    );
-                                    ?>
-                                </span>
+                        <p>
+                            <?php printf(__('Total Registros: %d', 'woocommerce-zoho-integration'), $total_source_records); ?>
+                        </p>
+                        <?php if (is_array($levels)): ?>
+                            <?php if (isset($levels['INFO']) && $levels['INFO'] > 0): ?>
+                                <p class="success">
+                                    <?php printf(__('Exitosas (Info): %d', 'woocommerce-zoho-integration'), $levels['INFO']); ?>
+                                </p>
                             <?php endif; ?>
-                        </div>
-                        <div class="direction">
-                            <span class="label"><?php esc_html_e('Zoho → WooCommerce:', 'woocommerce-zoho-integration'); ?></span>
-                            <span class="success"><?php echo $data['zoho_to_woo']['success']; ?></span>
-                            <?php if ($data['zoho_to_woo']['error'] > 0): ?>
-                                <span class="error">
-                                    <?php
-                                    printf(
-                                        _n(
-                                            '(%s error)',
-                                            '(%s errores)',
-                                            $data['zoho_to_woo']['error'],
-                                            'woocommerce-zoho-integration'
-                                        ),
-                                        number_format_i18n($data['zoho_to_woo']['error'])
-                                    );
-                                    ?>
-                                </span>
+                            <?php if ($total_source_errors > 0): ?>
+                                <p class="error">
+                                    <?php printf(__('Errores/Advertencias: %d', 'woocommerce-zoho-integration'), $total_source_errors); ?>
+                                </p>
                             <?php endif; ?>
-                        </div>
+                             <?php if (isset($levels['DEBUG']) && $levels['DEBUG'] > 0): ?>
+                                <p style="font-size:0.9em; opacity:0.7;">
+                                    <?php printf(__('Debug: %d', 'woocommerce-zoho-integration'), $levels['DEBUG']); ?>
+                                </p>
+                            <?php endif; ?>
+                        <?php endif; ?>
                     </div>
                 </div>
-            <?php endforeach; ?>
+            <?php
+                endforeach;
+            endif;
+            ?>
         </div>
         
         <div class="total-stats">
             <p>
-                <?php printf(
-                    __('Total: %d sincronizaciones exitosas, %d errores', 'woocommerce-zoho-integration'),
-                    $sync_stats['totals']['success'],
-                    $sync_stats['totals']['error']
-                ); ?>
+                <?php
+                $total_successful_records = isset($sync_stats['totals']['INFO']) ? intval($sync_stats['totals']['INFO']) : 0;
+                $total_error_records = isset($sync_stats['totals']['ERROR']) ? intval($sync_stats['totals']['ERROR']) : 0;
+                if(isset($sync_stats['totals']['WARNING'])) $total_error_records += intval($sync_stats['totals']['WARNING']);
+
+                printf(
+                    __('Total General: %d operaciones informativas (exitosas), %d errores/advertencias de un total de %d registros procesados en la última semana.', 'woocommerce-zoho-integration'),
+                    $total_successful_records,
+                    $total_error_records,
+                    isset($sync_stats['totals']['total_records']) ? intval($sync_stats['totals']['total_records']) : 0
+                );
+                ?>
             </p>
         </div>
     </div>
@@ -234,13 +245,23 @@ $sync_stats = $sync_manager->get_sync_stats('week');
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($log_summary['recent_errors'] as $error): ?>
+                    <?php
+                    if (isset($log_summary['recent_errors']) && is_array($log_summary['recent_errors'])):
+                        foreach ($log_summary['recent_errors'] as $error):
+                            // Verificar que $error sea un objeto y tenga las propiedades esperadas
+                            $time_to_display = isset($error->timestamp) ? human_time_diff(strtotime($error->timestamp), current_time('timestamp')) . ' ' . __('atrás', 'woocommerce-zoho-integration') : __('Fecha desconocida', 'woocommerce-zoho-integration');
+                            $source_to_display = isset($error->source) ? esc_html($error->source) : __('Fuente desconocida', 'woocommerce-zoho-integration');
+                            $message_to_display = isset($error->message) ? esc_html($error->message) : __('Mensaje no disponible', 'woocommerce-zoho-integration');
+                    ?>
                         <tr>
-                            <td><?php echo human_time_diff(strtotime($error->created_at), current_time('timestamp')) . ' ' . __('atrás', 'woocommerce-zoho-integration'); ?></td>
-                            <td><?php echo esc_html($error->sync_type); ?></td>
-                            <td><?php echo esc_html($error->message); ?></td>
+                            <td><?php echo $time_to_display; ?></td>
+                            <td><?php echo $source_to_display; ?></td>
+                            <td><?php echo $message_to_display; ?></td>
                         </tr>
-                    <?php endforeach; ?>
+                    <?php
+                        endforeach;
+                    endif;
+                    ?>
                 </tbody>
             </table>
             

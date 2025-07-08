@@ -806,14 +806,13 @@ class WZI_Sync_Manager {
         
         switch ($period) {
             case 'today':
-                // Usar placeholder %s para el nombre de la columna y escapar correctamente
-                $date_condition = $wpdb->prepare(" AND DATE(timestamp) = CURDATE()");
+                $date_condition = " AND DATE(timestamp) = CURDATE()"; // No necesita prepare si no hay placeholders
                 break;
             case 'week':
-                $date_condition = $wpdb->prepare(" AND timestamp >= DATE_SUB(NOW(), INTERVAL 7 DAY)");
+                $date_condition = " AND timestamp >= DATE_SUB(NOW(), INTERVAL 7 DAY)"; // No necesita prepare
                 break;
             case 'month':
-                $date_condition = $wpdb->prepare(" AND timestamp >= DATE_SUB(NOW(), INTERVAL 30 DAY)");
+                $date_condition = " AND timestamp >= DATE_SUB(NOW(), INTERVAL 30 DAY)"; // No necesita prepare
                 break;
         }
         
