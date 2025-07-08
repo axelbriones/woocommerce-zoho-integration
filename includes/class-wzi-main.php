@@ -64,7 +64,11 @@ class WZI_Main {
      * @since    1.0.0
      */
     public function __construct() {
-        $this->version = WZI_VERSION;
+        if (defined('WZI_VERSION')) {
+            $this->version = WZI_VERSION;
+        } else {
+            $this->version = '1.2.5'; // Fallback, pero WZI_VERSION debería estar definida
+        }
         $this->plugin_name = 'woocommerce-zoho-integration';
 
         $this->load_dependencies();

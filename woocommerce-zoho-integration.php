@@ -21,7 +21,7 @@ if (!defined('WPINC')) {
 /**
  * Versión actual del plugin.
  */
-define('WZI_VERSION', '1.2.4');
+define('WZI_VERSION', '1.2.5');
 
 /**
  * Definir constantes del plugin
