@@ -220,7 +220,7 @@ class WZI_Main {
         $this->loader->add_action('wp_enqueue_scripts', $plugin_public, 'enqueue_scripts');
 
         // REST API endpoints
-        $this->loader->add_action('rest_api_init', $plugin_public, 'register_rest_routes');
+        // $this->loader->add_action('rest_api_init', $plugin_public, 'register_rest_routes'); // Eliminado: WZI_Public no tiene este método. Los webhooks se registran en define_api_hooks.
     }
 
     /**
