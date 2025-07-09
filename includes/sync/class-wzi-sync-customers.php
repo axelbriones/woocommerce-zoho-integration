@@ -680,8 +680,7 @@ class WZI_Sync_Customers {
         // $this->logger->info(sprintf('Successfully synced WC User ID: %d to Zoho Contact ID: %s', $customer_id, $processed_record['id']));
         error_log("WZI_Sync_Customers: User ID $customer_id - SINCRONIZACIÓN EXITOSA a Zoho Contact ID: " . $processed_record['id']);
         return $processed_record;
-        }
-    }
+    } // Cierre correcto del método sync_customer_to_zoho
 
     /**
      * Sincronizar contacto a WooCommerce.
