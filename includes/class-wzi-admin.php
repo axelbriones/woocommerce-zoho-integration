@@ -483,19 +483,48 @@ class WZI_Admin {
      * @since    1.0.0
      */
     public function ajax_manual_sync() {
-        check_ajax_referer('wzi_admin_nonce', 'nonce');
+        ob_start(); // Iniciar buffer de salida
+        $original_display_errors = @ini_set('display_errors', 'Off');
+        $original_error_reporting = @error_reporting(0);
 
-        if (!current_user_can('manage_wzi_sync')) {
-            wp_die(__('No tienes permisos para realizar esta acción.', 'woocommerce-zoho-integration'));
+        $sync_type_for_error = 'desconocido';
+
+        try {
+            check_ajax_referer('wzi_admin_nonce', 'nonce');
+
+            if (!current_user_can('manage_wzi_sync')) {
+                ob_end_clean();
+                wp_send_json_error(['message' => __('No tienes permisos para realizar esta acción.', 'woocommerce-zoho-integration')], 403);
+                return;
+            }
+
+            $sync_type = isset($_POST['sync_type']) ? sanitize_text_field($_POST['sync_type']) : 'all';
+            $sync_type_for_error = $sync_type;
+            $direction = isset($_POST['direction']) ? sanitize_text_field($_POST['direction']) : null; // Dejar que WZI_Sync_Manager decida el default si es null
+
+            error_log("WZI_Admin::ajax_manual_sync - Iniciando para tipo: $sync_type, dirección: " . ($direction ?: 'default'));
+
+            $sync_manager = new WZI_Sync_Manager();
+            $result = $sync_manager->start_manual_sync($sync_type, $direction);
+
+            error_log("WZI_Admin::ajax_manual_sync - Resultado de start_manual_sync para $sync_type: " . print_r($result, true));
+
+            ob_end_clean(); // Limpiar buffer antes de enviar JSON
+            wp_send_json($result); // $result ya debería tener 'success' y 'message'
+
+        } catch (Exception $e) {
+            error_log("WZI_Admin::ajax_manual_sync - EXCEPCIÓN para tipo $sync_type_for_error: " . $e->getMessage());
+            ob_end_clean();
+            wp_send_json_error(['message' => $e->getMessage()]);
         }
 
-        $sync_type = isset($_POST['sync_type']) ? sanitize_text_field($_POST['sync_type']) : 'all';
-        $direction = isset($_POST['direction']) ? sanitize_text_field($_POST['direction']) : 'both';
-
-        $sync_manager = new WZI_Sync_Manager();
-        $result = $sync_manager->start_manual_sync($sync_type, $direction);
-
-        wp_send_json($result);
+        // Restaurar configuración de errores (puede no alcanzarse)
+        if ($original_display_errors !== false) {
+            @ini_set('display_errors', $original_display_errors);
+        }
+        if ($original_error_reporting !== false) {
+            @error_reporting($original_error_reporting);
+        }
     }
 
     /**
