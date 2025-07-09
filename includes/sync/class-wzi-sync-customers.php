@@ -88,27 +88,33 @@ class WZI_Sync_Customers {
     private function load_field_mapping() {
         global $wpdb;
         
-        $mapping_table = $wpdb->prefix . 'wzi_field_mapping'; // Unificado a singular
-        
-        $mappings = $wpdb->get_results($wpdb->prepare(
-            // Seleccionar explícitamente las columnas con los nombres correctos por claridad y eficiencia
+        $mapping_table = $wpdb->prefix . 'wzi_field_mapping';
+        $this->field_mapping = array(); // Limpiar antes de cargar
+
+        $query = $wpdb->prepare(
             "SELECT wc_field, zoho_field, direction, transform_function FROM {$mapping_table}
-             WHERE module = %s AND is_active = 1", // entity_type -> module
+             WHERE module = %s AND is_active = 1",
             'customer'
-        ));
+        );
+        $mappings = $wpdb->get_results($query);
+
+        if ($mappings === null) {
+            error_log("WZI_Sync_Customers: Error de base de datos al cargar mapeos para 'customer': " . $wpdb->last_error);
+        }
         
-        foreach ($mappings as $mapping) {
-            // Usar los nombres de columna correctos del objeto $mapping
+        foreach ((array) $mappings as $mapping) {
             $this->field_mapping[$mapping->wc_field] = array(
                 'zoho_field' => $mapping->zoho_field,
-                'sync_direction' => $mapping->direction, // sync_direction -> direction
+                'sync_direction' => $mapping->direction,
                 'transform_function' => $mapping->transform_function,
             );
         }
         
-        // Mapeo por defecto si no hay configuración
         if (empty($this->field_mapping)) {
+            error_log("WZI_Sync_Customers: No se encontraron mapeos de campos personalizados para 'customer'. Usando mapeos por defecto.");
             $this->field_mapping = $this->get_default_field_mapping();
+        } else {
+            error_log("WZI_Sync_Customers: Mapeos de campos cargados para 'customer': " . print_r($this->field_mapping, true));
         }
     }
 
@@ -542,165 +548,138 @@ class WZI_Sync_Customers {
      * @return   array|WP_Error              Contacto de Zoho o error.
      */
     private function sync_customer_to_zoho($customer) {
-        $zoho_data = array();
         $customer_id = $customer->get_id();
+        error_log("WZI_Sync_Customers: Iniciando sync_customer_to_zoho para WC User ID: $customer_id");
 
-        $this->logger->debug(sprintf('Starting data preparation for WC User ID: %d', $customer_id), array('field_mapping_count' => count($this->field_mapping)));
+        $zoho_data = array();
+        // $this->logger->debug(sprintf('Starting data preparation for WC User ID: %d', $customer_id), array('field_mapping_count' => count($this->field_mapping)));
+        error_log("WZI_Sync_Customers: Mapeos de campos para User ID $customer_id: " . print_r($this->field_mapping, true));
+
 
         foreach ($this->field_mapping as $woo_field_key => $mapping_details) {
             if (!in_array($mapping_details['sync_direction'], array('woo_to_zoho', 'both'))) {
-                $this->logger->debug(sprintf('Skipping field %s for WC User ID: %d due to sync direction (%s).', $woo_field_key, $customer_id, $mapping_details['sync_direction']));
+                // $this->logger->debug(sprintf('Skipping field %s for WC User ID: %d due to sync direction (%s).', $woo_field_key, $customer_id, $mapping_details['sync_direction']));
                 continue;
             }
 
             $value = $this->get_customer_field_value($customer, $woo_field_key);
-            $this->logger->debug(sprintf('WC User ID: %d, WC Field: %s, Raw Value: %s', $customer_id, $woo_field_key, is_array($value) ? json_encode($value) : $value));
+            // $this->logger->debug(sprintf('WC User ID: %d, WC Field: %s, Raw Value: %s', $customer_id, $woo_field_key, is_array($value) ? json_encode($value) : $value));
+            error_log("WZI_Sync_Customers: User ID $customer_id - Campo WC '$woo_field_key', Valor Crudo: " . (is_array($value) || is_object($value) ? print_r($value, true) : $value));
 
 
             if (!empty($mapping_details['transform_function'])) {
-                if (is_callable($mapping_details['transform_function'])) {
+                $transform_function = $mapping_details['transform_function'];
+                error_log("WZI_Sync_Customers: User ID $customer_id - Aplicando función de transformación '$transform_function' al campo '$woo_field_key'.");
+                if (is_callable($transform_function)) {
                     try {
-                        $value = call_user_func($mapping_details['transform_function'], $value, 'wc_to_zoho', $customer, $mapping_details);
-                        $this->logger->debug(sprintf('WC User ID: %d, Field: %s, Transformed Value: %s', $customer_id, $woo_field_key, is_array($value) ? json_encode($value) : $value));
+                        $value = call_user_func($transform_function, $value, 'wc_to_zoho', $customer, $mapping_details);
+                        // $this->logger->debug(sprintf('WC User ID: %d, Field: %s, Transformed Value: %s', $customer_id, $woo_field_key, is_array($value) ? json_encode($value) : $value));
+                        error_log("WZI_Sync_Customers: User ID $customer_id - Campo '$woo_field_key', Valor Transformado: " . (is_array($value) || is_object($value) ? print_r($value, true) : $value));
                     } catch (Exception $e) {
-                        $this->logger->error(sprintf('Error transforming field %s for WC User ID: %d. Function: %s. Error: %s', $woo_field_key, $customer_id, $mapping_details['transform_function'], $e->getMessage()));
+                        // $this->logger->error(sprintf('Error transforming field %s for WC User ID: %d. Function: %s. Error: %s', $woo_field_key, $customer_id, $mapping_details['transform_function'], $e->getMessage()));
+                        error_log("WZI_Sync_Customers: User ID $customer_id - ERROR transformando campo '$woo_field_key' con función '$transform_function': " . $e->getMessage());
                     }
-                } elseif (method_exists('WZI_Helpers', $mapping_details['transform_function'])) {
+                } elseif (method_exists('WZI_Helpers', $transform_function)) {
                      try {
-                        $value = WZI_Helpers::{$mapping_details['transform_function']}($value, 'wc_to_zoho', $customer, $mapping_details);
-                        $this->logger->debug(sprintf('WC User ID: %d, Field: %s, Transformed Value (Helper): %s', $customer_id, $woo_field_key, is_array($value) ? json_encode($value) : $value));
+                        $value = WZI_Helpers::{$transform_function}($value, 'wc_to_zoho', $customer, $mapping_details);
+                        // $this->logger->debug(sprintf('WC User ID: %d, Field: %s, Transformed Value (Helper): %s', $customer_id, $woo_field_key, is_array($value) ? json_encode($value) : $value));
+                        error_log("WZI_Sync_Customers: User ID $customer_id - Campo '$woo_field_key', Valor Transformado (Helper '$transform_function'): " . (is_array($value) || is_object($value) ? print_r($value, true) : $value));
                     } catch (Exception $e) {
-                        $this->logger->error(sprintf('Error transforming field %s with WZI_Helpers for WC User ID: %d. Function: %s. Error: %s', $woo_field_key, $customer_id, $mapping_details['transform_function'], $e->getMessage()));
+                        // $this->logger->error(sprintf('Error transforming field %s with WZI_Helpers for WC User ID: %d. Function: %s. Error: %s', $woo_field_key, $customer_id, $mapping_details['transform_function'], $e->getMessage()));
+                        error_log("WZI_Sync_Customers: User ID $customer_id - ERROR transformando campo '$woo_field_key' con WZI_Helpers::$transform_function: " . $e->getMessage());
                     }
-                }else {
-                    $this->logger->warning(sprintf('Transform function %s not found for field %s, WC User ID: %d.', $mapping_details['transform_function'], $woo_field_key, $customer_id));
+                } else {
+                    // $this->logger->warning(sprintf('Transform function %s not found for field %s, WC User ID: %d.', $mapping_details['transform_function'], $woo_field_key, $customer_id));
+                    error_log("WZI_Sync_Customers: User ID $customer_id - Función de transformación '{$mapping_details['transform_function']}' no encontrada para el campo '$woo_field_key'.");
                 }
             }
             
-            // Solo añadir si el valor no es nulo. Zoho puede rechazar claves con valores nulos.
-            // Algunos campos vacíos ('') pueden ser necesarios para borrar un valor en Zoho.
             if ($value !== null) {
                 $zoho_data[$mapping_details['zoho_field']] = $value;
             }
         }
         
-        // Asegurar que Last_Name (apellido) no esté vacío, ya que es requerido por Zoho CRM Contacts.
-        // Buscar si 'Last_Name' fue mapeado.
-        $last_name_zoho_key = 'Last_Name'; // Asumiendo que este es el API name estándar en Zoho.
+        $last_name_zoho_key = 'Last_Name';
         $is_last_name_mapped_and_filled = false;
-        foreach($this->field_mapping as $woo_field => $map_details) {
-            if ($map_details['zoho_field'] === $last_name_zoho_key && !empty($zoho_data[$last_name_zoho_key])) {
-                $is_last_name_mapped_and_filled = true;
-                break;
-            }
+        if (isset($zoho_data[$last_name_zoho_key]) && !empty(trim($zoho_data[$last_name_zoho_key]))) {
+            $is_last_name_mapped_and_filled = true;
         }
 
         if (!$is_last_name_mapped_and_filled) {
-            // Si Last_Name no está, o está vacío, usar un placeholder o el email.
             $placeholder_last_name = $customer->get_billing_last_name() ?: $customer->get_last_name();
-            if(empty($placeholder_last_name)) {
+            if(empty(trim($placeholder_last_name))) {
                 $user_info = get_userdata($customer_id);
-                $placeholder_last_name = $user_info ? $user_info->user_login : 'N/A';
+                $placeholder_last_name = $user_info ? $user_info->user_login : 'N/A_User_'. $customer_id;
             }
-             // Si el campo 'Last_Name' no fue mapeado en absoluto, lo añadimos.
-            // Si fue mapeado pero resultó en un valor vacío, lo sobrescribimos aquí si es necesario.
-            if (empty($zoho_data[$last_name_zoho_key])) {
-                 $zoho_data[$last_name_zoho_key] = $placeholder_last_name;
-                 $this->logger->info(sprintf('Last_Name for Zoho was empty or not mapped for WC User ID: %d. Using placeholder: %s', $customer_id, $placeholder_last_name));
-            }
+            $zoho_data[$last_name_zoho_key] = $placeholder_last_name;
+            error_log("WZI_Sync_Customers: User ID $customer_id - Last_Name para Zoho estaba vacío o no mapeado. Usando placeholder: '$placeholder_last_name'.");
         }
         
-        // Añadir datos fijos o adicionales
-        $zoho_data['Lead_Source'] = 'WooCommerce';
-        // La descripción puede ser más genérica o construirse con datos específicos si es necesario.
-        // $zoho_data['Description'] = sprintf(
-        //    __('Cliente sincronizado desde WooCommerce (ID: %d)', 'woocommerce-zoho-integration'),
-        //    $customer_id
-        // );
+        if(!isset($zoho_data['Lead_Source'])) { // Solo añadir si no fue mapeado
+            $zoho_data['Lead_Source'] = 'WooCommerce';
+        }
 
-        // Aplicar filtro para personalización final
         $zoho_data = apply_filters('wzi_customer_to_zoho_data', $zoho_data, $customer, $this->field_mapping);
+        error_log("WZI_Sync_Customers: User ID $customer_id - Payload de Zoho ANTES de filtrar nulos y validar: " . print_r($zoho_data, true));
 
-        // Eliminar cualquier clave con valor nulo explícito, ya que algunas APIs de Zoho no los aceptan.
-        // Las cadenas vacías suelen ser aceptables para borrar un campo.
         $zoho_data = array_filter($zoho_data, function($value) {
             return $value !== null;
         });
-
-        $this->logger->debug(sprintf('Zoho data payload for WC User ID: %d before validation and final filter', $customer_id), $zoho_data);
+        error_log("WZI_Sync_Customers: User ID $customer_id - Payload de Zoho DESPUÉS de filtrar nulos, ANTES de validar: " . print_r($zoho_data, true));
 
         // Validar los datos preparados antes de enviarlos a Zoho
-        $validation_result = WZI_Validator::validate_for_zoho($zoho_data, 'Contacts'); // Asumiendo 'Contacts' como tipo de entidad para el validador
-
-        if (!$validation_result['valid']) {
-            $this->logger->error(
-                sprintf('Validation failed for Zoho Contact data (WC User ID: %d).', $customer_id),
-                array(
-                    'errors' => $validation_result['errors'],
-                    'data_prepared' => $zoho_data
-                )
-            );
-            // Devolver un WP_Error con los detalles de la validación
-            // Es importante que el código de error sea único y descriptivo
-            $error_messages = implode('; ', array_map(function($field_errors) {
-                return implode(', ', (array)$field_errors);
-            }, $validation_result['errors']));
-            return new WP_Error(
-                'zoho_contact_validation_failed',
-                sprintf(__('Los datos preparados para el contacto de Zoho no pasaron la validación: %s', 'woocommerce-zoho-integration'), $error_messages),
-                $validation_result['errors']
-            );
+        if (class_exists('WZI_Validator')) {
+            $validation_result = WZI_Validator::validate_for_zoho($zoho_data, 'Contacts');
+            if (!$validation_result['valid']) {
+                $error_messages = implode('; ', array_map(function($field_errors) { return implode(', ', (array)$field_errors); }, $validation_result['errors']));
+                error_log("WZI_Sync_Customers: User ID $customer_id - FALLÓ la validación para datos de Contacto Zoho: " . $error_messages . " Datos: " . print_r($zoho_data, true));
+                return new WP_Error('zoho_contact_validation_failed', sprintf(__('Los datos preparados para el contacto de Zoho no pasaron la validación: %s', 'woocommerce-zoho-integration'), $error_messages), $validation_result['errors']);
+            }
+            $zoho_data = $validation_result['data']; // Usar datos validados/sanitizados
+            error_log("WZI_Sync_Customers: User ID $customer_id - Payload de Zoho DESPUÉS de validar: " . print_r($zoho_data, true));
+        } else {
+            error_log("WZI_Sync_Customers: User ID $customer_id - CLASE WZI_Validator NO ENCONTRADA. Saltando validación.");
         }
 
-        // Usar los datos potencialmente sanitizados/modificados por el validador
-        // Aunque WZI_Validator actualmente no modifica mucho, es una buena práctica.
-        $zoho_data = $validation_result['data'];
-
-        $this->logger->debug(sprintf('Final Zoho data payload for WC User ID: %d after validation', $customer_id), $zoho_data);
 
         $zoho_id = get_user_meta($customer_id, $this->zoho_id_meta_key, true);
-        $search_field_for_upsert = 'Email'; // Campo principal para buscar duplicados
+        $search_field_for_upsert = 'Email';
         $email_value = $customer->get_email();
-
         $upsert_criteria = [$search_field_for_upsert => $email_value];
+        $response = null;
 
         if ($zoho_id) {
-            $this->logger->info(sprintf('Updating Zoho Contact ID: %s for WC User ID: %d', $zoho_id, $customer_id));
-            // Para update, el ID debe estar en el payload según la doc de Zoho v2+
-            // $zoho_data['id'] = $zoho_id; // No, update_record lo añade. Upsert lo maneja.
+            error_log("WZI_Sync_Customers: User ID $customer_id - Intentando ACTUALIZAR Contacto Zoho ID: $zoho_id con datos: " . print_r($zoho_data, true));
             $response = $this->crm_api->update_record('Contacts', $zoho_id, $zoho_data);
         } else {
-            // Intentar upsert para evitar duplicados si el zoho_id no está pero el email sí existe en Zoho
-            $this->logger->info(sprintf('Attempting to upsert Zoho Contact for WC User ID: %d (Email: %s)', $customer_id, $email_value));
+            error_log("WZI_Sync_Customers: User ID $customer_id - Intentando UPSERT Contacto Zoho (Email: $email_value) con datos: " . print_r($zoho_data, true));
             $response = $this->crm_api->upsert_record('Contacts', $zoho_data, $upsert_criteria);
         }
 
         if (is_wp_error($response)) {
-            $this->logger->error(
-                sprintf('Error syncing WC User ID: %d to Zoho. Zoho ID: %s', $customer_id, $zoho_id ?: 'N/A (attempted upsert)'),
-                array('error_code' => $response->get_error_code(), 'error_message' => $response->get_error_message(), 'payload_sent' => $zoho_data)
-            );
+            error_log("WZI_Sync_Customers: User ID $customer_id - ERROR sincronizando a Zoho. Zoho ID: " . ($zoho_id ?: 'N/A (upsert)') . " - Código Error: " . $response->get_error_code() . " - Mensaje: " . $response->get_error_message() . " - Payload Enviado: " . print_r($zoho_data, true));
             return $response;
         }
 
-        // La respuesta de create/update/upsert en Zoho CRM v2+ suele estar en $response['data'][0]
-        // y el ID del registro en $response['data'][0]['details']['id']
+        error_log("WZI_Sync_Customers: User ID $customer_id - Respuesta CRUDA de Zoho API: " . print_r($response, true));
+
         $processed_record = null;
-        if (isset($response['data'][0]['code']) && $response['data'][0]['code'] == 'SUCCESS') {
+        if (isset($response['data'][0]['code']) && strtoupper($response['data'][0]['code']) === 'SUCCESS' && isset($response['data'][0]['details']['id'])) {
             $processed_record = $response['data'][0]['details'];
-        } elseif (isset($response['id'])) { // Fallback para algunas estructuras de API más antiguas o respuestas directas de upsert
-            $processed_record = $response;
+            error_log("WZI_Sync_Customers: User ID $customer_id - ÉXITO (desde array 'data')! Zoho Contact ID: " . $processed_record['id']);
+        } elseif (isset($response['id'])) {
+            $processed_record = $response; // Upsert a veces devuelve el objeto directamente
+            error_log("WZI_Sync_Customers: User ID $customer_id - ÉXITO (desde ID directo)! Zoho Contact ID: " . $processed_record['id']);
+        } else {
+             error_log("WZI_Sync_Customers: User ID $customer_id - Respuesta de Zoho API no contenía ID de éxito o estructura inesperada: " . print_r($response, true));
+            return new WP_Error('zoho_api_unexpected_response', __('Respuesta de API de Zoho inesperada o sin ID de éxito.', 'woocommerce-zoho-integration'), $response);
         }
 
-
-        if (isset($processed_record['id'])) {
-            update_user_meta($customer_id, $this->zoho_id_meta_key, $processed_record['id']);
-            update_user_meta($customer_id, $this->last_sync_meta_key, current_time('mysql'));
-            $this->logger->info(sprintf('Successfully synced WC User ID: %d to Zoho Contact ID: %s', $customer_id, $processed_record['id']));
-            return $processed_record;
-        } else {
-            $this->logger->warning(sprintf('Zoho API response did not contain an ID or success code for WC User ID: %d.', $customer_id), $response);
-            return new WP_Error('zoho_id_missing_or_error', __('Zoho API response did not contain an ID or success code.', 'woocommerce-zoho-integration'), $response);
+        update_user_meta($customer_id, $this->zoho_id_meta_key, $processed_record['id']);
+        update_user_meta($customer_id, $this->last_sync_meta_key, current_time('mysql'));
+        // $this->logger->info(sprintf('Successfully synced WC User ID: %d to Zoho Contact ID: %s', $customer_id, $processed_record['id']));
+        error_log("WZI_Sync_Customers: User ID $customer_id - SINCRONIZACIÓN EXITOSA a Zoho Contact ID: " . $processed_record['id']);
+        return $processed_record;
         }
     }
 
