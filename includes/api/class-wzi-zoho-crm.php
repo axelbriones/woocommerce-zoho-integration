@@ -197,31 +197,33 @@ class WZI_Zoho_CRM extends WZI_API_Handler {
             return new WP_Error('invalid_module', __('Módulo inválido', 'woocommerce-zoho-integration'));
         }
         
+        error_log("WZI_Zoho_CRM: create_record - Modulo: $module, Datos recibidos: " . print_r($data, true));
         $formatted_data = $this->format_data_for_zoho($data);
+        error_log("WZI_Zoho_CRM: create_record - Modulo: $module, Datos formateados para Zoho: " . print_r($formatted_data, true));
         
         $body = array(
             'data' => array($formatted_data),
         );
         
-        $response = $this->post($module, $body);
+        $response = $this->post($module, $body); // $this->post ya debería loguear la petición y respuesta a nivel de WZI_API_Handler
         
         if (is_wp_error($response)) {
+            error_log("WZI_Zoho_CRM: create_record - WP_Error al crear registro en Modulo: $module. Error: " . $response->get_error_message());
             return $response;
         }
         
-        // Zoho CRM API v2+ response structure for successful single record creation:
-        // $response['data']['data'][0] contains an object like:
-        // { "code": "SUCCESS", "details": { "Modified_Time": "...", "id": "...", ... }, "message": "record added", "status": "success" }
-        if (isset($response['data']['data'][0]['code']) && $response['data']['data'][0]['code'] === 'SUCCESS' && isset($response['data']['data'][0]['details'])) {
+        error_log("WZI_Zoho_CRM: create_record - Respuesta de API para Modulo $module: " . print_r($response, true));
+
+        if (isset($response['data']['data'][0]['code']) && strtoupper($response['data']['data'][0]['code']) === 'SUCCESS' && isset($response['data']['data'][0]['details'])) {
             $record_details = $response['data']['data'][0]['details'];
-            
-            $this->clear_cache($module); // Limpiar caché para este módulo
-            
-            $this->logger->info(sprintf('Record created successfully in module %s. Zoho ID: %s', $module, $record_details['id'] ?? 'N/A'), $record_details);
-            return $record_details; // Devolver solo los detalles del registro (incluyendo ID)
+            $this->clear_cache($module);
+            // $this->logger->info(sprintf('Record created successfully in module %s. Zoho ID: %s', $module, $record_details['id'] ?? 'N/A'), $record_details);
+            error_log("WZI_Zoho_CRM: create_record - ÉXITO al crear registro en Modulo $module. Zoho ID: " . ($record_details['id'] ?? 'N/A') . ". Detalles: " . print_r($record_details, true));
+            return $record_details;
         }
         
-        $this->logger->error(sprintf('Failed to create record in module %s or unexpected success response structure.', $module), $response['data'] ?? $response);
+        // $this->logger->error(sprintf('Failed to create record in module %s or unexpected success response structure.', $module), $response['data'] ?? $response);
+        error_log("WZI_Zoho_CRM: create_record - FALLÓ al crear registro en Modulo $module o estructura de respuesta inesperada. Respuesta: " . print_r($response['data'] ?? $response, true));
         return new WP_Error('create_failed_unexpected_response', __('No se pudo crear el registro o la respuesta fue inesperada.', 'woocommerce-zoho-integration'), $response['data'] ?? $response);
     }
 
@@ -239,32 +241,35 @@ class WZI_Zoho_CRM extends WZI_API_Handler {
             return new WP_Error('invalid_module', __('Módulo inválido', 'woocommerce-zoho-integration'));
         }
         
+        error_log("WZI_Zoho_CRM: update_record - Modulo: $module, ID: $id, Datos recibidos: " . print_r($data, true));
         $formatted_data = $this->format_data_for_zoho($data);
-        $formatted_data['id'] = $id;
+        // $formatted_data['id'] = $id; // El ID no debe ir en el payload principal para update, sino en el endpoint o como parte de cada registro en el array 'data'
+        error_log("WZI_Zoho_CRM: update_record - Modulo: $module, ID: $id, Datos formateados para Zoho: " . print_r($formatted_data, true));
         
         $body = array(
-            'data' => array($formatted_data),
+            'data' => array(array_merge(['id' => $id], $formatted_data)), // Zoho espera el ID dentro de cada objeto de datos para la actualización masiva
         );
         
-        $response = $this->put($module, $body);
+        $response = $this->put($module, $body); // $this->put ya debería loguear la petición y respuesta
         
         if (is_wp_error($response)) {
+            error_log("WZI_Zoho_CRM: update_record - WP_Error al actualizar registro en Modulo: $module, ID: $id. Error: " . $response->get_error_message());
             return $response;
         }
 
-        // Zoho CRM API v2+ response structure for successful single record update:
-        // Similar to create, it returns status for each record in the 'data' array.
-        if (isset($response['data']['data'][0]['code']) && $response['data']['data'][0]['code'] === 'SUCCESS' && isset($response['data']['data'][0]['details'])) {
+        error_log("WZI_Zoho_CRM: update_record - Respuesta de API para Modulo $module, ID $id: " . print_r($response, true));
+
+        if (isset($response['data']['data'][0]['code']) && strtoupper($response['data']['data'][0]['code']) === 'SUCCESS' && isset($response['data']['data'][0]['details'])) {
             $record_details = $response['data']['data'][0]['details'];
-
-            $this->clear_cache($module); // Limpiar caché para este módulo
-            $this->clear_cache($module . '_' . $id); // Limpiar caché específico del registro si existe
-
-            $this->logger->info(sprintf('Record updated successfully in module %s. Zoho ID: %s', $module, $id), $record_details);
-            return $record_details; // Devolver solo los detalles del registro (incluyendo ID)
+            $this->clear_cache($module);
+            $this->clear_cache($module . '_' . $id);
+            // $this->logger->info(sprintf('Record updated successfully in module %s. Zoho ID: %s', $module, $id), $record_details);
+            error_log("WZI_Zoho_CRM: update_record - ÉXITO al actualizar registro en Modulo $module, ID: $id. Detalles: " . print_r($record_details, true));
+            return $record_details;
         }
         
-        $this->logger->error(sprintf('Failed to update record in module %s, ID: %s or unexpected success response structure.', $module, $id), $response['data'] ?? $response);
+        // $this->logger->error(sprintf('Failed to update record in module %s, ID: %s or unexpected success response structure.', $module, $id), $response['data'] ?? $response);
+        error_log("WZI_Zoho_CRM: update_record - FALLÓ al actualizar registro en Modulo $module, ID: $id o estructura de respuesta inesperada. Respuesta: " . print_r($response['data'] ?? $response, true));
         return new WP_Error('update_failed_unexpected_response', __('No se pudo actualizar el registro o la respuesta fue inesperada.', 'woocommerce-zoho-integration'), $response['data'] ?? $response);
     }
 

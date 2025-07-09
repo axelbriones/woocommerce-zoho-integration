@@ -87,6 +87,16 @@ function run_woocommerce_zoho_integration() {
     }
 }
 
+// Cargar textdomain en 'init'
+function wzi_load_textdomain_init() {
+    load_plugin_textdomain(
+        'woocommerce-zoho-integration',
+        false,
+        dirname(plugin_basename(__FILE__)) . '/languages/'
+    );
+}
+add_action('init', 'wzi_load_textdomain_init');
+
 // Esperar a que todos los plugins estén cargados
 add_action('plugins_loaded', 'run_woocommerce_zoho_integration');
 

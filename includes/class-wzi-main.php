@@ -72,7 +72,7 @@ class WZI_Main {
         $this->plugin_name = 'woocommerce-zoho-integration';
 
         $this->load_dependencies();
-        $this->set_locale();
+        // $this->set_locale(); // Comentado: La carga del textdomain se moverá al archivo principal del plugin.
         $this->define_admin_hooks();
         $this->define_public_hooks();
         $this->define_api_hooks();
@@ -108,7 +108,7 @@ class WZI_Main {
         /**
          * La clase responsable de definir la funcionalidad de internacionalización.
          */
-        require_once WZI_PLUGIN_DIR . 'includes/class-wzi-i18n.php';
+        // require_once WZI_PLUGIN_DIR . 'includes/class-wzi-i18n.php'; // Comentado: La clase WZI_i18n ya no se usará para cargar el textdomain.
 
         /**
          * La clase responsable de definir todas las acciones del área de administración.
@@ -164,6 +164,7 @@ class WZI_Main {
      * @since    1.0.0
      * @access   private
      */
+    /* // Comentado: La carga del textdomain se moverá al archivo principal del plugin.
     private function set_locale() {
         $plugin_i18n = new WZI_i18n();
         // Cambiar el hook de 'plugins_loaded' a 'init' para la carga del textdomain.
@@ -171,6 +172,7 @@ class WZI_Main {
         // Intentar con una prioridad más temprana para asegurar que se cargue antes de que otras funciones en 'init' lo necesiten.
         $this->loader->add_action('init', $plugin_i18n, 'load_plugin_textdomain', 1);
     }
+    */
 
     /**
      * Registrar todos los hooks relacionados con la funcionalidad del área de administración.
