@@ -28,10 +28,9 @@ class WZI_i18n {
      * @since    1.0.0
      */
     public function load_plugin_textdomain() {
-        load_plugin_textdomain(
-            'woocommerce-zoho-integration',
-            false,
-            dirname(dirname(plugin_basename(__FILE__))) . '/languages/'
-        );
+        // WordPress debería usar el 'Domain Path' especificado en la cabecera del plugin
+        // cuando el tercer argumento (deprecado para path absoluto) es false o se omite.
+        // El 'Text Domain' y 'Domain Path' están definidos en woocommerce-zoho-integration.php
+        load_plugin_textdomain('woocommerce-zoho-integration');
     }
 }
