@@ -27,44 +27,66 @@ class WZI_Activator {
      * @since    1.0.0
      */
     public static function activate() {
+        error_log("WZI_Activator: activate() INICIO");
         // Crear tablas de base de datos
         self::create_database_tables();
+        error_log("WZI_Activator: DESPUÉS de create_database_tables()");
         
         // Establecer configuraciones por defecto
-        self::set_default_settings();
+        // self::set_default_settings();
+        // error_log("WZI_Activator: DESPUÉS de set_default_settings()");
         
         // Crear roles y capacidades
-        self::create_roles_and_capabilities();
+        // self::create_roles_and_capabilities();
+        // error_log("WZI_Activator: DESPUÉS de create_roles_and_capabilities()");
         
         // Programar tareas cron
-        self::schedule_cron_jobs();
+        // self::schedule_cron_jobs();
+        // error_log("WZI_Activator: DESPUÉS de schedule_cron_jobs()");
         
         // Crear carpetas necesarias
-        self::create_plugin_folders();
+        // self::create_plugin_folders();
+        // error_log("WZI_Activator: DESPUÉS de create_plugin_folders()");
         
         // Limpiar caché
-        flush_rewrite_rules();
+        // flush_rewrite_rules();
+        // error_log("WZI_Activator: DESPUÉS de flush_rewrite_rules()");
+        error_log("WZI_Activator: activate() FIN - SOLO TABLAS ACTIVAS");
     }
 
     /**
      * Crear tablas de base de datos
      */
     private static function create_database_tables() {
+        error_log("WZI_Activator: create_database_tables() INICIO");
+
         // Incluir los archivos de migración
         require_once WZI_PLUGIN_DIR . 'database/migrations/create_sync_logs_table.php';
         require_once WZI_PLUGIN_DIR . 'database/migrations/create_sync_queue_table.php';
         require_once WZI_PLUGIN_DIR . 'database/migrations/create_mapping_table.php';
         require_once WZI_PLUGIN_DIR . 'database/migrations/create_auth_tokens_table.php';
 
-        // Ejecutar las funciones de creación de tablas
-        wzi_create_sync_logs_table();
-        wzi_create_sync_queue_table();
-        wzi_create_mapping_table();
-        wzi_create_auth_tokens_table();
+        // Ejecutar SOLO UNA a la vez para probar, comenzando con la que más hemos modificado.
+        // Comenta/descomenta para aislar.
 
-        // Guardar versión de la base de datos (opcional, si quieres versionar el schema general)
-        // O cada archivo de migración maneja su propia versión de tabla como ya lo hacen.
-        update_option('wzi_db_schema_version', WZI_VERSION); // Usar una clave diferente para la versión general del schema
+        // error_log("WZI_Activator: ANTES de wzi_create_sync_logs_table()");
+        // wzi_create_sync_logs_table();
+        // error_log("WZI_Activator: DESPUÉS de wzi_create_sync_logs_table()");
+
+        // error_log("WZI_Activator: ANTES de wzi_create_sync_queue_table()");
+        // wzi_create_sync_queue_table();
+        // error_log("WZI_Activator: DESPUÉS de wzi_create_sync_queue_table()");
+
+        error_log("WZI_Activator: ANTES de wzi_create_mapping_table()");
+        wzi_create_mapping_table(); // <--- SOLO ESTA ACTIVA INICIALMENTE
+        error_log("WZI_Activator: DESPUÉS de wzi_create_mapping_table()");
+
+        // error_log("WZI_Activator: ANTES de wzi_create_auth_tokens_table()");
+        // wzi_create_auth_tokens_table();
+        // error_log("WZI_Activator: DESPUÉS de wzi_create_auth_tokens_table()");
+
+        update_option('wzi_db_schema_version', WZI_VERSION);
+        error_log("WZI_Activator: create_database_tables() FIN. Opción wzi_db_schema_version actualizada a " . WZI_VERSION);
     }
     
     /**
