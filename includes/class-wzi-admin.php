@@ -392,17 +392,17 @@ class WZI_Admin {
      * @since    1.0.0
      */
     public function ajax_test_api_connection() {
-        // Intentar suprimir notices para asegurar una respuesta JSON limpia
-        // Esto es un parche para el notice _load_textdomain_just_in_time que corrompe el JSON.
-        $original_display_errors = ini_get('display_errors');
-        $original_error_reporting = error_reporting();
+        // Iniciar buffer de salida para capturar cualquier salida inesperada (como notices)
+        ob_start();
 
-        @ini_set('display_errors', 0);
-        error_reporting($original_error_reporting & ~E_NOTICE & ~E_USER_NOTICE & ~E_DEPRECATED & ~E_USER_DEPRECATED & ~E_WARNING & ~E_USER_WARNING); // Suprimir notices y warnings
+        // Intentar suprimir notices/errores de PHP para asegurar una respuesta JSON limpia
+        $original_display_errors = @ini_set('display_errors', 0);
+        $original_error_reporting = @error_reporting(0); // Suprimir todo temporalmente
 
         check_ajax_referer('wzi_admin_nonce', 'nonce');
 
         if (!current_user_can('manage_wzi_settings')) { // Ajustar capacidad si es necesario
+            ob_end_clean(); // Limpiar buffer antes de enviar error
             wp_send_json_error(array('message' => __('No tienes permisos para realizar esta acción.', 'woocommerce-zoho-integration')), 403);
             return;
         }
