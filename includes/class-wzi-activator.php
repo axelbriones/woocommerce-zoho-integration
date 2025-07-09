@@ -27,35 +27,34 @@ class WZI_Activator {
      * @since    1.0.0
      */
     public static function activate() {
-        // Forzar visualización de errores y logging máximo para la activación
-        $original_display_errors = @ini_set('display_errors', 1);
-        $original_error_reporting = @error_reporting(E_ALL);
-        error_log("WZI_Activator: activate() INICIO. display_errors y error_reporting forzados para depuración.");
+        $original_display_errors = @ini_set('display_errors', 'Off'); // Intentar suprimir salida directa
+        $original_error_reporting = @error_reporting(E_ALL); // Reportar todo a logs
+        error_log("WZI_Activator: activate() INICIO. display_errors=Off, error_reporting=E_ALL.");
 
-        // self::create_database_tables(); // Comentado inicialmente
-        // error_log("WZI_Activator: DESPUÉS de create_database_tables()");
+        self::create_database_tables();
+        error_log("WZI_Activator: DESPUÉS de create_database_tables()");
         
-        // self::set_default_settings();
-        // error_log("WZI_Activator: DESPUÉS de set_default_settings()");
+        self::set_default_settings();
+        error_log("WZI_Activator: DESPUÉS de set_default_settings()");
         
-        // self::create_roles_and_capabilities();
-        // error_log("WZI_Activator: DESPUÉS de create_roles_and_capabilities()");
+        self::create_roles_and_capabilities();
+        error_log("WZI_Activator: DESPUÉS de create_roles_and_capabilities()");
         
-        // self::schedule_cron_jobs();
-        // error_log("WZI_Activator: DESPUÉS de schedule_cron_jobs()");
+        self::schedule_cron_jobs();
+        error_log("WZI_Activator: DESPUÉS de schedule_cron_jobs()");
         
-        // self::create_plugin_folders();
-        // error_log("WZI_Activator: DESPUÉS de create_plugin_folders()");
+        self::create_plugin_folders();
+        error_log("WZI_Activator: DESPUÉS de create_plugin_folders()");
         
-        // flush_rewrite_rules();
-        // error_log("WZI_Activator: DESPUÉS de flush_rewrite_rules()");
-        error_log("WZI_Activator: activate() FIN - TODO COMENTADO INICIALMENTE EXCEPTO LOGS.");
+        flush_rewrite_rules();
+        error_log("WZI_Activator: DESPUÉS de flush_rewrite_rules()");
+        error_log("WZI_Activator: activate() FIN.");
 
         // Restaurar configuración original de errores
-        if ($original_display_errors !== false) {
+        if ($original_display_errors !== false) { // Solo restaurar si ini_set no falló
             @ini_set('display_errors', $original_display_errors);
         }
-        if ($original_error_reporting !== false) {
+        if ($original_error_reporting !== false) { // Solo restaurar si error_reporting no falló
             @error_reporting($original_error_reporting);
         }
     }
@@ -64,33 +63,33 @@ class WZI_Activator {
      * Crear tablas de base de datos
      */
     private static function create_database_tables() {
-        error_log("WZI_Activator: create_database_tables() INICIO - TODO COMENTADO INTERNAMENTE");
+        error_log("WZI_Activator: create_database_tables() INICIO");
 
         // Incluir los archivos de migración
-        // require_once WZI_PLUGIN_DIR . 'database/migrations/create_sync_logs_table.php';
-        // require_once WZI_PLUGIN_DIR . 'database/migrations/create_sync_queue_table.php';
-        // require_once WZI_PLUGIN_DIR . 'database/migrations/create_mapping_table.php';
-        // require_once WZI_PLUGIN_DIR . 'database/migrations/create_auth_tokens_table.php';
+        require_once WZI_PLUGIN_DIR . 'database/migrations/create_sync_logs_table.php';
+        require_once WZI_PLUGIN_DIR . 'database/migrations/create_sync_queue_table.php';
+        require_once WZI_PLUGIN_DIR . 'database/migrations/create_mapping_table.php';
+        require_once WZI_PLUGIN_DIR . 'database/migrations/create_auth_tokens_table.php';
 
-        // Comentar todas las llamadas para la prueba inicial
-        // error_log("WZI_Activator: ANTES de wzi_create_sync_logs_table()");
-        // wzi_create_sync_logs_table();
-        // error_log("WZI_Activator: DESPUÉS de wzi_create_sync_logs_table()");
+        error_log("WZI_Activator: ANTES de wzi_create_auth_tokens_table()");
+        wzi_create_auth_tokens_table();
+        error_log("WZI_Activator: DESPUÉS de wzi_create_auth_tokens_table()");
 
-        // error_log("WZI_Activator: ANTES de wzi_create_sync_queue_table()");
-        // wzi_create_sync_queue_table();
-        // error_log("WZI_Activator: DESPUÉS de wzi_create_sync_queue_table()");
+        error_log("WZI_Activator: ANTES de wzi_create_mapping_table()");
+        wzi_create_mapping_table();
+        error_log("WZI_Activator: DESPUÉS de wzi_create_mapping_table()");
 
-        // error_log("WZI_Activator: ANTES de wzi_create_mapping_table()");
-        // wzi_create_mapping_table();
-        // error_log("WZI_Activator: DESPUÉS de wzi_create_mapping_table()");
+        error_log("WZI_Activator: ANTES de wzi_create_sync_logs_table()");
+        wzi_create_sync_logs_table();
+        error_log("WZI_Activator: DESPUÉS de wzi_create_sync_logs_table()");
 
-        // error_log("WZI_Activator: ANTES de wzi_create_auth_tokens_table()");
-        // wzi_create_auth_tokens_table();
-        // error_log("WZI_Activator: DESPUÉS de wzi_create_auth_tokens_table()");
+        error_log("WZI_Activator: ANTES de wzi_create_sync_queue_table()");
+        wzi_create_sync_queue_table();
+        error_log("WZI_Activator: DESPUÉS de wzi_create_sync_queue_table()");
 
-        // update_option('wzi_db_schema_version', WZI_VERSION);
-        // error_log("WZI_Activator: create_database_tables() FIN. Opción wzi_db_schema_version actualizada a " . WZI_VERSION);
+
+        update_option('wzi_db_schema_version', WZI_VERSION);
+        error_log("WZI_Activator: create_database_tables() FIN. Opción wzi_db_schema_version actualizada a " . WZI_VERSION);
     }
     
     /**
