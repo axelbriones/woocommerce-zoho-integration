@@ -155,6 +155,16 @@ class WZI_Main {
         require_once WZI_PLUGIN_DIR . 'includes/hooks/class-wzi-woocommerce-hooks.php';
         require_once WZI_PLUGIN_DIR . 'includes/hooks/class-wzi-custom-hooks.php';
 
+        // Cargar la clase WP_List_Table para los logs si estamos en el admin
+        if (is_admin()) {
+            if (!class_exists('WZI_Logs_List_Table')) {
+                $list_table_path = WZI_PLUGIN_DIR . 'admin/includes/class-wzi-logs-list-table.php';
+                if (file_exists($list_table_path)) {
+                    require_once $list_table_path;
+                }
+            }
+        }
+
         $this->loader = new WZI_Loader();
     }
 
