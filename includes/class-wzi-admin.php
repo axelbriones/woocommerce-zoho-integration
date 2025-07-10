@@ -301,7 +301,37 @@ class WZI_Admin {
      * @since    1.0.0
      */
     public function display_logs_page() {
-        require_once WZI_PLUGIN_DIR . 'admin/partials/wzi-logs-display.php';
+        // La clase WZI_Logs_List_Table debería haber sido cargada por WZI_Main->load_dependencies()
+        // o estar disponible a través de un autoloader si el plugin tuviera uno.
+        // Aquí, creamos la instancia y la pasamos a la vista (o la asignamos a una global como antes).
+
+        if (!class_exists('WZI_Logs_List_Table')) {
+            // Esto es un fallback por si la carga en WZI_Main no funcionó o si la clase no está en la ruta esperada.
+            $list_table_class_path = WZI_PLUGIN_DIR . 'admin/includes/class-wzi-logs-list-table.php';
+            if (file_exists($list_table_class_path)) {
+                require_once $list_table_class_path;
+            } else {
+                // Si el archivo no existe, mostrar un error y no intentar cargar la plantilla de logs.
+                echo '<div class="wrap"><h1>' . esc_html(get_admin_page_title()) . '</h1>';
+                echo '<div class="notice notice-error"><p>' . esc_html__('Error crítico: El archivo de la clase WZI_Logs_List_Table no se encuentra en la ruta esperada.', 'woocommerce-zoho-integration') . '</p></div>';
+                echo '</div>';
+                return;
+            }
+        }
+
+        // Verificar si la tabla de logs existe, para dar un mensaje más amigable si no.
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'wzi_sync_logs';
+        if($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
+            echo '<div class="wrap"><h1>' . esc_html(get_admin_page_title()) . '</h1>';
+            echo '<div class="notice notice-warning"><p>' . sprintf(esc_html__('La tabla de base de datos para los logs (%s) no parece existir. Por favor, desactiva y reactiva el plugin WooCommerce Zoho Integration para intentar crearla.', 'woocommerce-zoho-integration'), "<code>$table_name</code>") . '</p></div>';
+            // No mostramos el resto de la página de logs si la tabla no existe.
+        } else {
+             // Crear una instancia de nuestra tabla de lista.
+            $GLOBALS['wzi_logs_list_table_instance'] = new WZI_Logs_List_Table();
+            // La plantilla wzi-logs-display.php llamará a prepare_items() y display()
+            require_once WZI_PLUGIN_DIR . 'admin/partials/wzi-logs-display.php';
+        }
     }
 
     /**
