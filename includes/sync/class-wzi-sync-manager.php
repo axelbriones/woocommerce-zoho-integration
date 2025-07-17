@@ -724,22 +724,20 @@ class WZI_Sync_Manager {
         );
         
         // Añadir última sincronización
-        $logs_table_name = $wpdb->prefix . 'wzi_sync_logs'; // Definir nombre de tabla para claridad
-        $last_sync = $wpdb->get_row( $wpdb->prepare(
+        $logs_table_name = $wpdb->prefix . 'wzi_sync_logs';
+        $last_sync = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM {$logs_table_name}
-             WHERE source != %s
+             WHERE message = %s
              ORDER BY timestamp DESC
              LIMIT 1",
-            'general'
+            'Sync completed'
         ));
-        
+
         if ($last_sync) {
-            // Usar los nombres de columna correctos del objeto $last_sync
-            // Asumiendo que 'status' se refiere a 'log_level' y 'sync_type' a 'source'
             $this->sync_status['last_sync'] = array(
-                'type' => $last_sync->source,       // sync_type -> source
-                'status' => $last_sync->log_level,  // status -> log_level
-                'time' => $last_sync->timestamp,   // created_at -> timestamp
+                'type' => $last_sync->source,
+                'status' => $last_sync->log_level,
+                'time' => $last_sync->timestamp,
             );
         }
         

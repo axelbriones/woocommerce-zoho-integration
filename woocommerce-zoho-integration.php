@@ -18,14 +18,10 @@ if (!defined('WPINC')) {
     die;
 }
 
-// Intento temporal de forzar la visualización de errores durante la carga inicial del plugin
-@ini_set('display_errors', 1);
-@error_reporting(E_ALL);
-
 /**
  * Versión actual del plugin.
  */
-define('WZI_VERSION', '1.2.5');
+define('WZI_VERSION', '1.2.4');
 
 /**
  * Definir constantes del plugin
