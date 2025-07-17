@@ -134,7 +134,7 @@ jQuery(document).ready(function($) {
             type: 'POST',
             data: {
                 action: 'wzi_manual_sync', // This will be the WordPress AJAX action hook
-                nonce: '<?php echo wp_create_nonce('wzi_manual_sync_nonce'); ?>',
+                nonce: '<?php echo wp_create_nonce('wzi_admin_nonce'); ?>',
                 sync_type: syncType, // e.g., 'customers', 'products'
                 sync_all: true // Or specific IDs if you implement that later
             },

@@ -310,13 +310,13 @@ abstract class WZI_API_Handler {
         }
         
         // Guardar en transient si el límite es bajo
+        set_transient(
+            'wzi_rate_limit_' . $this->service,
+            $this->rate_limit,
+            $this->rate_limit['reset'] - time()
+        );
+
         if ($this->rate_limit['remaining'] < 10) {
-            set_transient(
-                'wzi_rate_limit_' . $this->service,
-                $this->rate_limit,
-                $this->rate_limit['reset'] - time()
-            );
-            
             $this->logger->warning('Rate limit warning', array(
                 'service' => $this->service,
                 'remaining' => $this->rate_limit['remaining'],
