@@ -21,7 +21,7 @@ $api_settings = get_option('wzi_api_settings', array());
 
 // Manejar autorización
 if (isset($_GET['action']) && $_GET['action'] === 'authorize') {
-    $services = isset($_POST['services']) ? $_POST['services'] : array('crm');
+    $services = isset($_POST['services']) ? (array) $_POST['services'] : array('crm');
     $auth_url = $auth->get_authorization_url($services);
     
     if ($auth_url) {
