@@ -74,7 +74,6 @@ class WZI_Main {
         $this->load_dependencies();
         // $this->set_locale(); // Comentado: La carga del textdomain se moverá al archivo principal del plugin.
         $this->define_admin_hooks();
-        $this->define_public_hooks();
         $this->define_api_hooks();
         $this->define_sync_hooks();
         $this->define_cron_hooks();
@@ -114,11 +113,6 @@ class WZI_Main {
          * La clase responsable de definir todas las acciones del área de administración.
          */
         require_once WZI_PLUGIN_DIR . 'includes/class-wzi-admin.php';
-
-        /**
-         * La clase responsable de definir todas las acciones del lado público.
-         */
-        require_once WZI_PLUGIN_DIR . 'public/class-wzi-public.php';
 
         /**
          * Clases de configuración y utilidades
@@ -217,23 +211,6 @@ class WZI_Main {
         // Configuraciones
         $plugin_settings = new WZI_Settings($this->get_plugin_name(), $this->get_version());
         $this->loader->add_action('admin_init', $plugin_settings, 'register_settings');
-    }
-
-    /**
-     * Registrar todos los hooks relacionados con la funcionalidad pública del sitio.
-     *
-     * @since    1.0.0
-     * @access   private
-     */
-    private function define_public_hooks() {
-        $plugin_public = new WZI_Public($this->get_plugin_name(), $this->get_version());
-
-        // Estilos y scripts públicos
-        $this->loader->add_action('wp_enqueue_scripts', $plugin_public, 'enqueue_styles');
-        $this->loader->add_action('wp_enqueue_scripts', $plugin_public, 'enqueue_scripts');
-
-        // REST API endpoints
-        // $this->loader->add_action('rest_api_init', $plugin_public, 'register_rest_routes'); // Eliminado: WZI_Public no tiene este método. Los webhooks se registran en define_api_hooks.
     }
 
     /**

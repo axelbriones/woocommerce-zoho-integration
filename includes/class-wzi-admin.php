@@ -49,10 +49,6 @@ class WZI_Admin {
     public function __construct($plugin_name, $version) {
         $this->plugin_name = $plugin_name;
         $this->version = $version;
-
-        // Añadir gancho para la acción AJAX de prueba de conexión
-        add_action('wp_ajax_wzi_test_connection', array($this, 'ajax_test_connection'));
-        add_action('wp_ajax_wzi_manual_sync', array($this, 'ajax_manual_sync'));
     }
 
     /**
