@@ -94,7 +94,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'revoke' && isset($_GET['servi
                                 <button type="button" class="button wzi-test-connection" data-service="<?php echo esc_attr($service); ?>">
                                     <?php _e('Probar Conexión', 'woocommerce-zoho-integration'); ?>
                                 </button>
-                                <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=wzi-settings&tab=api&action=revoke&service=' . $service), 'wzi_revoke_' . $service); ?>" 
+                                <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=wzi-settings&tab=api&action=revoke&service=' . $service), 'wzi_revoke_' . $service); ?>"
                                    class="button button-link-delete"
                                    onclick="return confirm('<?php esc_attr_e('¿Estás seguro de que deseas revocar esta conexión?', 'woocommerce-zoho-integration'); ?>');">
                                     <?php _e('Revocar', 'woocommerce-zoho-integration'); ?>
@@ -104,6 +104,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'revoke' && isset($_GET['servi
                     <?php endforeach; ?>
                 </tbody>
             </table>
+            <div id="wzi-test-connection-feedback" style="margin-top: 10px;"></div>
         <?php else: ?>
             <p class="connection-status disconnected">
                 <span class="dashicons dashicons-warning"></span>
@@ -195,3 +196,40 @@ if (isset($_GET['action']) && $_GET['action'] === 'revoke' && isset($_GET['servi
         </ol>
     </div>
 </div>
+
+<script type="text/javascript">
+jQuery(document).ready(function($) {
+    $('.wzi-test-connection').on('click', function() {
+        var $button = $(this);
+        var service = $button.data('service');
+        var $feedback = $('#wzi-test-connection-feedback');
+
+        $button.prop('disabled', true);
+        $feedback.html('<p>Prueba de conexión...</p>').removeClass('error success');
+
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'wzi_test_connection',
+                nonce: '<?php echo wp_create_nonce('wzi_test_connection_nonce'); ?>',
+                service: service
+            },
+            success: function(response) {
+                if (response.success) {
+                    $feedback.html('<p>' + response.data.message + '</p>').addClass('updated success');
+                } else {
+                    var errorMessage = response.data && response.data.message ? response.data.message : '<?php esc_html_e( "An unknown error occurred.", "woocommerce-zoho-integration" ); ?>';
+                    $feedback.html('<p>' + errorMessage + '</p>').addClass('error');
+                }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                $feedback.html('<p><?php esc_html_e( "AJAX request failed: ", "woocommerce-zoho-integration" ); ?>' + textStatus + ' - ' + errorThrown + '</p>').addClass('error');
+            },
+            complete: function() {
+                $button.prop('disabled', false);
+            }
+        });
+    });
+});
+</script>

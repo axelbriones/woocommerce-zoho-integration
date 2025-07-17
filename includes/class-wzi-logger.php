@@ -43,8 +43,11 @@ class WZI_Logger {
             $this->log_dir = $upload_dir['basedir'] . '/wzi-logs';
             if (!file_exists($this->log_dir)) {
                 if (wp_mkdir_p($this->log_dir)) {
+                    error_log('WZI_Logger: Created log directory: ' . $this->log_dir);
                     @file_put_contents($this->log_dir . '/.htaccess', 'deny from all');
                     @file_put_contents($this->log_dir . '/index.html', ''); 
+                } else {
+                    error_log('WZI_Logger: Failed to create log directory: ' . $this->log_dir);
                 }
             }
         } else {
@@ -140,6 +143,7 @@ class WZI_Logger {
 
     private function log_to_file($level_string, $message, $context = array()) {
         if (!$this->log_dir || (!is_writable($this->log_dir) && !wp_mkdir_p($this->log_dir))) {
+            error_log("WZI_Logger: Log directory is not writable and could not be created.");
             return;
         }
         if (!$this->debug_mode && strtoupper($level_string) !== 'ERROR') {
@@ -153,7 +157,9 @@ class WZI_Logger {
             $message,
             !empty($context) ? wp_json_encode($context, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) : ''
         );
-        @file_put_contents($filename, $log_entry, FILE_APPEND | LOCK_EX);
+        if (@file_put_contents($filename, $log_entry, FILE_APPEND | LOCK_EX) === false) {
+            error_log("WZI_Logger: Failed to write to log file: " . $filename);
+        }
     }
 
     public function get_logs($args = array()) { // ... (resto del método get_logs como te lo di antes) ... 

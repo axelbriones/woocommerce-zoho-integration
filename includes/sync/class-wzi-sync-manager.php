@@ -150,6 +150,22 @@ class WZI_Sync_Manager {
      * @return   array                   Resultado de la operación.
      */
     public function start_manual_sync($sync_type = 'all', $direction = null) {
+        // Verificar si se ha excedido el límite de la API
+        $services = array('crm', 'inventory', 'books', 'campaigns');
+        foreach ($services as $service) {
+            $rate_limit = get_transient('wzi_rate_limit_' . $service);
+            if ($rate_limit && $rate_limit['remaining'] <= 0) {
+                return array(
+                    'success' => false,
+                    'message' => sprintf(
+                        __('Se ha excedido el límite de la API de Zoho para el servicio %s. Por favor, espere %s antes de volver a intentarlo.', 'woocommerce-zoho-integration'),
+                        ucfirst($service),
+                        human_time_diff(time(), $rate_limit['reset'])
+                    ),
+                );
+            }
+        }
+
         // Verificar si ya hay una sincronización en curso
         if ($this->is_sync_running()) {
             return array(
@@ -181,7 +197,19 @@ class WZI_Sync_Manager {
         ));
         
         // Programar tarea en background
-        wp_schedule_single_event(time(), 'wzi_run_manual_sync', array($sync_type, $direction));
+        $scheduled = wp_schedule_single_event(time(), 'wzi_run_manual_sync', array($sync_type, $direction));
+
+        if ($scheduled === false) {
+            $this->logger->error('Failed to schedule manual sync.', array(
+                'sync_type' => $sync_type,
+                'direction' => $direction,
+            ));
+            return array(
+                'success' => false,
+                'message' => __('Failed to schedule manual sync.', 'woocommerce-zoho-integration'),
+                'status' => $this->sync_status,
+            );
+        }
         
         return array(
             'success' => true,
